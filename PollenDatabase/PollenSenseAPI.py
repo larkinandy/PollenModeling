@@ -1,0 +1,75 @@
+### PollenSenseAPI.py 
+### Author: Andrew Larkin
+### Date Created: March 27, 2026
+### Summary: Custom wrapper for querying the Pollen Sense API
+
+################ Import Libraries ##################
+
+import requests
+from requests.exceptions import HTTPError
+import pandas as ps
+
+class PollenAPI:
+
+
+    # initialize class
+    # INPUTS:
+    #    API_KEY (str) - Pollen Sense API key - unique for each app
+    #    url (str) - api url
+    def __init__(self,API_KEY,url):
+        self.API_KEY = API_KEY
+        self.url = url
+
+    # get sites and corresponding properties
+    # OUTPUTS:
+    #    siteData (pandas dataframe) - site ids and metadata
+    def getSites(self):
+        queryURL = self.url + "/sites"
+        headers = {
+            "accept": "application/json",
+            "x-ps-key": self.API_KEY
+        }
+
+        try:
+            # Make the GET request
+            response = requests.get(queryURL,headers=headers)
+
+            # Check for success
+            response.raise_for_status()
+        
+        except HTTPError as http_err:
+            print(f'HTTP error occured: {http_err}')
+            return None
+
+        except requests.exceptions.RequestException as err:
+            print(f'An error occurred: {err}')
+            return None
+
+        # Parse JSON
+        siteData = ps.DataFrame(response.json())
+        return(siteData)
+
+    # get sensors and corresponding properties
+    # OUTPUTS:
+    #    sensorData (pandas dataframe) - sensor ids and metadata
+    def getSensors(self):
+        return 0
+    
+    # get categories and corresponding properties
+    # OUTPUTS:
+    #    categoryData (pandas dataframe) - categories and properties
+    def getCategories(self):
+        return 0
+    
+    # get hourly metrics for a single site and specific timeframe
+    # INPUTS:
+    #    siteId (str) - unique site id 
+    #    starttime (datetime) - start time for metric window (inclusive)
+    #    endTime (datetime) - end time for metric window (inclusive)
+    # OUTPUTS:
+    #    siteMetrics (pandas dataframe) - metrics for the corresponding site and time window
+    def metrics(self,siteId,startTime,endTime):
+        return 0
+    
+
+# end of PollenSenseAPI.py

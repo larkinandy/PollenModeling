@@ -1,0 +1,8 @@
+# ignore adobe illustrator files
+*.ai
+
+# ignore files containing secrets
+*secrets.py
+
+# ignore compiled python scripts
+*.pyc

@@ -1,0 +1,91 @@
+SET timezone = 'UTC';
+CREATE EXTENSION postgis;
+
+CREATE table city (
+	city_id INTEGER NOT NULL,
+	city_name VARCHAR(100) NOT NULL,
+	center_location GEOMETRY(Point, 4326) NOT NULL,
+	CHECK (ST_SRID(center_location) = 4326),
+	start_time TIMESTAMPTZ,
+	stop_time TIMESTAMPTZ,
+	CHECK (stop_time IS NULL OR stop_time > start_time),
+	PRIMARY KEY (city_id)
+);
+
+CREATE TABLE site (
+	site_id VARCHAR(100) NOT NULL,
+	city_id INTEGER REFERENCES city(city_id) NOT NULL,
+	location GEOMETRY(Point, 4326) NOT NULL,
+	CHECK (ST_SRID(location) = 4326),
+	name VARCHAR(100),
+	usage_code VARCHAR(2),
+	start_time TIMESTAMPTZ,
+	stop_time TIMESTAMPTZ,
+	CHECK (stop_time IS NULL OR stop_time > start_time),
+	PRIMARY KEY (site_id)
+);
+
+CREATE TABLE sensor (
+	sensor_id INTEGER NOT NULL,
+	product_model_id VARCHAR(20) NOT NULL,
+	status_code INTEGER,
+	status_at TIMESTAMPTZ,
+	status_message VARCHAR(100),
+	status_description VARCHAR(50),
+	mode INTEGER,
+	mode_description VARCHAR(50),
+	PRIMARY KEY (sensor_id)
+);
+
+CREATE TABLE site_sensor_join (
+	site_id VARCHAR(100) REFERENCES site(site_id) NOT NULL,
+	sensor_id INTEGER REFERENCES sensor(sensor_id) NOT NULL,
+	height INTEGER CHECK (height >= 0) ,
+	start_time TIMESTAMPTZ,
+	stop_time TIMESTAMPTZ,
+	PRIMARY KEY (site_id,sensor_id)
+);
+
+CREATE TABLE site_weekly_qa (
+	site_id VARCHAR(100) NOT NULL REFERENCES site(site_id),
+	week_start TIMESTAMPTZ NOT NULL,
+	n_measurements INTEGER NOT NULL DEFAULT 0 CHECK (n_measurements >= 0) ,
+	is_online boolean DEFAULT false,
+	status_code INTEGER,
+	PRIMARY KEY (site_id,week_start)
+);
+
+CREATE TABLE city_weekly_qa (
+	city_id INTEGER NOT NULL REFERENCES city(city_id),
+	week_start TIMESTAMPTZ NOT NULL,
+	n_measurements INTEGER NOT NULL DEFAULT 0 CHECK (n_measurements >= 0) ,
+	n_monitors INTEGER NOT NULL DEFAULT 0 CHECK (n_monitors >= 0) ,
+	n_online INTEGER NOT NULL DEFAULT 0 CHECK (n_online >= 0) ,
+	PRIMARY KEY (city_id, week_start)
+);
+
+CREATE TABLE category (
+	category_id SERIAL,
+	name VARCHAR(20) NOT NULL,
+	group_code VARCHAR(20) NOT NULL,
+	description VARCHAR(20) NOT NULL,
+	common_name VARCHAR(20),
+	root_group_code VARCHAR (20) NOT NULL,
+	PRIMARY KEY (category_id)
+);
+
+CREATE TABLE hourly_metrics (
+	sensor_id INTEGER NOT NULL REFERENCES sensor(sensor_id),
+	category_id INTEGER NOT NULL REFERENCES category(category_id),
+	moment TIMESTAMPTZ NOT NULL,
+	cubic_meters REAL NOT NULL CHECK (cubic_meters >= 0),
+	count INTEGER NOT NULL CHECK (count >=0),
+	PRIMARY KEY (sensor_id, category_id, moment)
+);
+
+CREATE INDEX idx_site_location ON site USING GIST (location);
+CREATE INDEX idx_city_center ON city USING GIST (center_location);
+CREATE INDEX idx_hourly_sensor_time ON hourly_metrics (sensor_id, moment);
+CREATE INDEX ON hourly_metrics (sensor_id, moment);
+CREATE INDEX idx_hourly_metrics_brin ON hourly_metrics USING BRIN (moment);
+CREATE INDEX idx_hourly_category ON hourly_metrics (category_id);
