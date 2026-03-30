@@ -104,13 +104,55 @@ class SQLAPI:
                     longitude, 
                     latitude,
                     name,
-                    usage_code) 
+                    usage_code
+                ) 
             )
         self.conn.commit()
   
     # insert sensor record in sensor table
-    def addSensor(self):
-        return 0
+    def addSensor(self, sensor_id, product_model_id, status_code, status_at, 
+                  status_message, status_description, mode, mode_description):
+        query = """
+        
+        INSERT INTO  sensor(
+            sensor_id,
+            product_model_id,
+            status_code,
+            status_at,
+            status_message,
+            status_description,
+            mode,
+            mode_description
+        )
+        VALUES (
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s
+        )
+        ON CONFLICT (sensor_id) DO NOTHING;
+        """
+
+        with self.conn.cursor() as cur:
+            cur.execute(
+                query, 
+                (
+                    sensor_id, 
+                    product_model_id, 
+                    status_code, 
+                    status_at,
+                    status_message,
+                    status_description,
+                    mode,
+                    mode_description
+                )
+
+            )
+        self.conn.commit()
     
     # insert join record into site_sensor_join table
     def addSiteSensorJoind(self):

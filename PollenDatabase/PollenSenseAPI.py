@@ -53,7 +53,30 @@ class PollenAPI:
     # OUTPUTS:
     #    sensorData (pandas dataframe) - sensor ids and metadata
     def getSensors(self):
-        return 0
+        queryURL = self.url + "/sensors"
+        headers = {
+            "accept": "application/json",
+            "x-ps-key": self.API_KEY
+        }
+
+        try:
+            # Make the GET request
+            response = requests.get(queryURL,headers=headers)
+
+            # Check for success
+            response.raise_for_status()
+        
+        except HTTPError as http_err:
+            print(f'HTTP error occured: {http_err}')
+            return None
+
+        except requests.exceptions.RequestException as err:
+            print(f'An error occurred: {err}')
+            return None
+
+        # Parse JSON
+        sensorData = ps.DataFrame(response.json())
+        return(sensorData)
     
     # get categories and corresponding properties
     # OUTPUTS:

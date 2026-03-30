@@ -136,11 +136,11 @@ CREATE TABLE city_weekly_qa (
 
 CREATE TABLE category (
 	category_id SERIAL,
-	name VARCHAR(50) NOT NULL,
-	group_code VARCHAR(20) NOT NULL,
-	description VARCHAR(50) NOT NULL,
-	common_name VARCHAR(50),
-	root_group_code VARCHAR (20) NOT NULL,
+	name VARCHAR(100) NOT NULL,
+	group_code VARCHAR(50) NOT NULL,
+	description VARCHAR(100) NOT NULL,
+	common_name VARCHAR(100),
+	root_group_code VARCHAR (50) NOT NULL,
 	PRIMARY KEY (category_id)
 );
 
