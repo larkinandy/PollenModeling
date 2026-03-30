@@ -2,7 +2,8 @@
 *.ai
 
 # ignore files containing secrets
-*secrets.py
+*.env
 
 # ignore compiled python scripts
 *.pyc
+

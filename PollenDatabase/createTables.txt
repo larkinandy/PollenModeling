@@ -12,6 +12,76 @@ CREATE table city (
 	PRIMARY KEY (city_id)
 );
 
+ALTER TABLE city
+ADD COLUMN in_study BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE city
+ADD COLUMN study_region_name varchar(20);
+
+UPDATE city
+SET in_study = false
+WHERE city_id IN (42660, 14740, 36020);
+UPDATE city
+SET study_region_name = 'Seattle'
+WHERE city_id IN (42660, 14740, 36020);
+
+UPDATE city
+SET in_study = true
+WHERE city_id IN (41860, 42100, 41940, 41940, 40900, 46700, 42220);
+UPDATE city
+SET study_region_name = 'San Francisco'
+WHERE city_id IN (41860, 42100, 41940, 41940, 40900, 46700, 42220);
+
+UPDATE city
+SET in_study = true
+WHERE city_id IN (31080, 37100, 12540, 40140, 41740);
+UPDATE city
+SET study_region_name = 'Los Angeles'
+WHERE city_id IN (31080, 37100, 12540, 40140, 41740);
+
+UPDATE city
+SET in_study = true
+WHERE city_id IN (41620, 36260, 25720, 39340);
+UPDATE city
+SET study_region_name = 'Salt Lake City'
+WHERE city_id IN (41620, 36260, 25720, 39340);
+
+UPDATE city
+SET in_study = true
+WHERE city_id IN (11460, 19820, 33780, 10300, 27100, 29620);
+UPDATE city
+SET study_region_name = 'Ann Arbor'
+WHERE city_id IN (11460, 19820, 33780, 10300, 27100, 29620);
+
+UPDATE city
+SET in_study = true
+WHERE city_id IN (20500, 25780, 39580, 41820, 38240, 24660,	15500);
+UPDATE city
+SET study_region_name = 'Raleigh'
+WHERE city_id IN (20500, 25780, 39580, 41820, 38240, 24660,	15500);
+
+UPDATE city
+SET in_study = true
+WHERE city_id IN (12580, 23900, 49620, 37980, 20100, 20660,	47900);
+UPDATE city
+SET study_region_name = 'Baltimore'
+WHERE city_id IN (12580, 23900, 49620, 37980, 20100, 20660,	47900);
+
+UPDATE city
+SET in_study = true
+WHERE city_id IN (35620, 39100, 14860, 35300, 25540, 35980,	39300, 12100, 45940, 10900, 20700);
+UPDATE city
+SET study_region_name = 'New York City'
+WHERE city_id IN (35620, 39100, 14860, 35300, 25540, 35980,	39300, 12100, 45940, 10900, 20700);
+
+
+
+
+
+
+
+
+
+
 CREATE TABLE site (
 	site_id VARCHAR(100) NOT NULL,
 	city_id INTEGER REFERENCES city(city_id) NOT NULL,
@@ -66,13 +136,16 @@ CREATE TABLE city_weekly_qa (
 
 CREATE TABLE category (
 	category_id SERIAL,
-	name VARCHAR(20) NOT NULL,
+	name VARCHAR(50) NOT NULL,
 	group_code VARCHAR(20) NOT NULL,
-	description VARCHAR(20) NOT NULL,
-	common_name VARCHAR(20),
+	description VARCHAR(50) NOT NULL,
+	common_name VARCHAR(50),
 	root_group_code VARCHAR (20) NOT NULL,
 	PRIMARY KEY (category_id)
 );
+
+ALTER TABLE category
+ADD CONSTRAINT unique_category_name UNIQUE (name);
 
 CREATE TABLE hourly_metrics (
 	sensor_id INTEGER NOT NULL REFERENCES sensor(sensor_id),

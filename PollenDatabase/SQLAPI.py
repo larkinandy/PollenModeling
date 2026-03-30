@@ -125,9 +125,45 @@ class SQLAPI:
         return 0
     
     # insert category record into category table
-    def addCategory(self):
-        return 0
-    
+    # INPUTS:
+    #    name (str) - Pollen Sense name assigned to category
+    #    group_code (str) - parent that code belongs to in hierarchical clustering
+    #    description (str) - species (or group) latin name
+    #    common_name (str) - species (or group) common name
+    #    root_group_code (str) - root parent that code belongs to in hierarchical clustering
+    def addCategory(self, name, group_code, description, common_name, root_group_code):
+        query = """
+
+        INSERT INTO  category(
+            name,
+            group_code,
+            description,
+            common_name,
+            root_group_code
+        )
+        VALUES (
+            %s,
+            %s,
+            %s,
+            %s,
+            %s
+        )
+        ON CONFLICT (name) DO NOTHING;
+        """
+
+        with self.conn.cursor() as cur:
+            cur.execute(
+                query, 
+                (
+                    name, 
+                    group_code, 
+                    description, 
+                    common_name,
+                    root_group_code,
+                ) 
+            )
+        self.conn.commit()
+
     # insert hourly metric into hourly_metrics table
     def addHourlyMetric(self):
         return 0
