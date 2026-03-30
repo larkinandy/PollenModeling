@@ -68,6 +68,13 @@ class SQLAPI:
         self.conn.commit()
     
     # insert site record into site table
+    # INPUTS:
+    #    site_id (str) - unique site id
+    #    city_id (int) - unique US Census GEOID
+    #    longitude (float) - site longitude coord
+    #    latitude (float) - site latitude coord
+    #    name (str) - name (not systematic, does not follow a nomenclature)
+    #    usage_code (str) - monitor usage type (e.g. indoor vs. outdoor)
     def addSite(self, site_id, city_id, longitude, latitude, name, usage_code):
         query = """
         
