@@ -242,7 +242,6 @@ class SQLAPI:
     #    root_group_code (str) - root parent that code belongs to in hierarchical clustering
     def addCategory(self, name, group_code, description, common_name, root_group_code):
         query = """
-
         INSERT INTO  category(
             name,
             group_code,
@@ -295,9 +294,56 @@ class SQLAPI:
             )
         self.conn.commit()
 
+    # update last updated time for site_sensor combination
+    # INPUTS:
+    #    site_id (str) - unique site id
+    #    sensor_id (int) - unique sensor id
+    #    new_update_time (TIMESTAMPTZ) - new update time in local time
+    def updateSensorLastUpdated(self, site_id, sensor_id, new_update_time):
+        # Update update time only if new_update_time is later than existing.
+        # Does NOT try to insert a new row.
+    
+        query = """
+            UPDATE site_sensor_join
+            SET last_updated = %s
+            WHERE site_id = %s
+            AND sensor_id = %s
+            AND (%s > last_updated OR last_updated IS NULL);
+        """
+
+        with self.conn.cursor() as cur:
+            cur.execute(
+                query, 
+                (new_update_time,site_id, sensor_id, new_update_time)
+            )
+        self.conn.commit()
+
     # insert hourly metric into hourly_metrics table
-    def addHourlyMetric(self):
-        return 0
+    def addHourlyMetric(self,moment,category_id,value,sensor_id):
+        query = """
+        INSERT INTO hourly_metrics(
+            moment,category_id,pcount,sensor_id
+        )
+        VALUES (
+            %s,
+            %s,
+            %s,
+            %s
+        )
+        ON CONFLICT (moment,category_id,sensor_id) DO NOTHING;
+        """
+
+        with self.conn.cursor() as cur:
+            cur.execute(
+                query, 
+                (
+                    moment, 
+                    category_id, 
+                    value, 
+                    sensor_id,
+                ) 
+            )
+        self.conn.commit()
     
     # given a set of lat/lon coordinates, identify
     # the nearest city in the city table
@@ -339,6 +385,43 @@ class SQLAPI:
             cur.execute(query)
             results = cur.fetchall()  # list of tuples
         return results
+    
+    # get active sensor_site combinations for querying Pollen Sense API
+    # OUTPUTs:
+    #    tuples of
+                # site_id (str) - unique site id
+                # sensor_id (int) - unique sensor id
+                # since (TIMESTAMPTZ) - when sensor was provisioned to site
+                # last_updated (TIMESTAMPTZ) - most recent hourly record from
+                #                              site_sensor combo in SQL database
+    def getActiveSensorSites(self):
+        query = """
+        SELECT site_id, sensor_id, since, last_updated 
+        FROM site_sensor_join 
+        WHERE stop_time is null;
+        """
+
+        with self.conn.cursor() as cur:
+            cur.execute(query)
+            results = cur.fetchall()  # list of tuples
+        return results
+    
+    def getCategoryLookup(self):
+        query = """
+            SELECT name, category_id
+            FROM category;
+        """
+        
+        with self.conn.cursor() as cur:
+            cur.execute(query)
+            rows = cur.fetchall()
+
+        # Convert to dictionary
+        lookup = {name: category_id for name, category_id in rows}
+        
+        return lookup
+
+    
 
    ### SQL API isn't needed yet for retrieval operations.
 

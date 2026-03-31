@@ -71,15 +71,6 @@ UPDATE city
 SET study_region_name = 'New York City'
 WHERE city_id IN (35620, 39100, 14860, 35300, 25540, 35980,	39300, 12100, 45940, 10900, 20700);
 
-
-
-
-
-
-
-
-
-
 CREATE TABLE site (
 	site_id VARCHAR(100) NOT NULL,
 	city_id INTEGER REFERENCES city(city_id) NOT NULL,
@@ -111,9 +102,14 @@ CREATE TABLE site_sensor_join (
 	sensor_id INTEGER REFERENCES sensor(sensor_id) NOT NULL,
 	height DOUBLE PRECISION CHECK (height >= 0) ,
 	since TIMESTAMPTZ,
+	last_updated TIMESTAMPTZ,
 	stop_time TIMESTAMPTZ,
 	PRIMARY KEY (site_id,sensor_id)
 );
+
+ALTER TABLE site_sensor_join 
+ADD COLUMN last_updated TIMESTAMPTZ
+CHECK (last_updated IS NULL OR last_updated >= start_time)
 
 CREATE TABLE site_weekly_qa (
 	site_id VARCHAR(100) NOT NULL REFERENCES site(site_id),
@@ -150,9 +146,16 @@ CREATE TABLE hourly_metrics (
 	sensor_id INTEGER NOT NULL REFERENCES sensor(sensor_id),
 	category_id INTEGER NOT NULL REFERENCES category(category_id),
 	moment TIMESTAMPTZ NOT NULL,
-	cubic_meters REAL NOT NULL CHECK (cubic_meters >= 0),
-	count INTEGER NOT NULL CHECK (count >=0),
+	pcount DOUBLE PRECISION NOT NULL CHECK (pcount >= 0),
 	PRIMARY KEY (sensor_id, category_id, moment)
+);
+
+CREATE TABLE  houlry_flow (
+	sensor_id INTEGER NOT NULL REFERENCES sensor(sensor_id),
+	site_id VARCHAR(100) NOT NULL REFERENCES site(site_id),
+	moment TIMESTAMPTZ NOT NULL,
+	cubic_meters DOUBLE PRECISION NOT NULL CHECK (cubic_meters >= 0),
+	PRIMARY KEY (sensor_id, moment)
 );
 
 CREATE INDEX idx_site_location ON site USING GIST (location);
