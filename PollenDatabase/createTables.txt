@@ -8,14 +8,12 @@ CREATE table city (
 	CHECK (ST_SRID(center_location) = 4326),
 	start_time TIMESTAMPTZ,
 	stop_time TIMESTAMPTZ,
+	study_region_name varchar(20),
+	in_study BOOLEAN NOT NULL DEFAULT false;
 	CHECK (stop_time IS NULL OR stop_time > start_time),
 	PRIMARY KEY (city_id)
 );
 
-ALTER TABLE city
-ADD COLUMN in_study BOOLEAN NOT NULL DEFAULT false;
-ALTER TABLE city
-ADD COLUMN study_region_name varchar(20);
 
 UPDATE city
 SET in_study = false
@@ -91,6 +89,7 @@ CREATE TABLE site (
 	usage_code VARCHAR(2),
 	start_time TIMESTAMPTZ,
 	stop_time TIMESTAMPTZ,
+	last_update TIMESTAMPTZ,
 	CHECK (stop_time IS NULL OR stop_time > start_time),
 	PRIMARY KEY (site_id)
 );
@@ -110,8 +109,8 @@ CREATE TABLE sensor (
 CREATE TABLE site_sensor_join (
 	site_id VARCHAR(100) REFERENCES site(site_id) NOT NULL,
 	sensor_id INTEGER REFERENCES sensor(sensor_id) NOT NULL,
-	height INTEGER CHECK (height >= 0) ,
-	start_time TIMESTAMPTZ,
+	height DOUBLE PRECISION CHECK (height >= 0) ,
+	since TIMESTAMPTZ,
 	stop_time TIMESTAMPTZ,
 	PRIMARY KEY (site_id,sensor_id)
 );

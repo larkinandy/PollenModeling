@@ -110,6 +110,15 @@ class SQLAPI:
         self.conn.commit()
   
     # insert sensor record in sensor table
+    # INPUTS:
+    #    sensor_id (int) - unique sensor id
+    #    product_model_id (str) - hardware model id
+    #    status_code (int) - sensor status code
+    #    status_at (TIMESTAMPZ) - local time of last status update
+    #    status_message (str) - human readable version of status code
+    #    status_description (str) - more details about status code
+    #    mode (int) - mode code (e.g. online, offline)
+    #    mode_description (stR) - human readable version of mode code 
     def addSensor(self, sensor_id, product_model_id, status_code, status_at, 
                   status_message, status_description, mode, mode_description):
         query = """
@@ -155,9 +164,67 @@ class SQLAPI:
         self.conn.commit()
     
     # insert join record into site_sensor_join table
-    def addSiteSensorJoind(self):
-        return 0
+    # INPUTS:
+    #    site_id (str) - unique site id
+    #    sensor_id (int) - unique sensor id
+    #    height (float) - approximate height of sensor above ground, in meters
+    #    start_time (TIMESTAMPZ) - local time monitor was first activated
+    def addSiteSensorJoin(self, site_id, sensor_id, height,start_time):
+        query = """
+        
+        INSERT INTO  site_sensor_join(
+            site_id,
+            sensor_id,
+            height,
+            since
+        )
+        VALUES (
+            %s,
+            %s,
+            %s,
+            %s
+        )
+        ON CONFLICT (site_id, sensor_id) DO NOTHING;
+        """
+
+        with self.conn.cursor() as cur:
+            cur.execute(
+                query, 
+                (
+                    site_id,
+                    sensor_id,
+                    height,
+                    start_time
+                )
+            )
+        self.conn.commit()
     
+    # upsert start_time in site records
+    def upsertSiteStartTime(self,site_id,start_time):
+        query = """
+        
+        UPDATE site(
+            SET start_time = %s,
+            WHERE site_id = %s
+        )
+        VALUES (
+            %s,
+            %s
+        )
+        """
+
+        with self.conn.cursor() as cur:
+            cur.execute(
+                query, 
+                (
+                    start_time,
+                    site_id,
+                )
+            )
+        self.conn.commit()
+
+
+
     # insert weekly QA record into site_weekly_qa table
     def addSiteWeeklyQA(self):
         return 0
@@ -206,6 +273,28 @@ class SQLAPI:
             )
         self.conn.commit()
 
+    # update start time for sites
+    # INPUTS:
+    #    site_id (str) - unique site id
+    #    new_start_time (TIMESTAMPTZ) - new start time in local time
+    def updateStartTimeIfEarlier(self, site_id, new_start_time):
+        # Update start_time only if new_start_time is earlier than existing.
+        # Does NOT try to insert a new row.
+    
+        query = """
+            UPDATE site
+            SET start_time = %s
+            WHERE site_id = %s
+            AND (%s < start_time OR start_time IS NULL);
+        """
+
+        with self.conn.cursor() as cur:
+            cur.execute(
+                query, 
+                (new_start_time,site_id, new_start_time)
+            )
+        self.conn.commit()
+
     # insert hourly metric into hourly_metrics table
     def addHourlyMetric(self):
         return 0
@@ -231,6 +320,25 @@ class SQLAPI:
             if row:
                 return row[0]
             return None
+    
+    # get start date of sensor provisioned to site. 
+    # if multiple sensors are provisioned, returns earliest provision date
+    # only works prospectively, 
+    # OUTPUTS:
+    #    tuples of
+                # site_id (str) - unique site id
+                # since (TIMESTAMPTZ) - earliest provision date in local time
+    def getSiteStarts(self):
+        query = """
+        SELECT site_id, MIN(since) AS earliest_since
+        FROM site_sensor_join
+        GROUP BY site_id;
+        """
+
+        with self.conn.cursor() as cur:
+            cur.execute(query)
+            results = cur.fetchall()  # list of tuples
+        return results
 
    ### SQL API isn't needed yet for retrieval operations.
 
