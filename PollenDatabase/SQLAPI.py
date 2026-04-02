@@ -146,7 +146,13 @@ class SQLAPI:
             %s,
             %s
         )
-        ON CONFLICT (sensor_id) DO NOTHING;
+        ON CONFLICT (sensor_id) 
+        DO UPDATE SET
+            status_code = EXCLUDED.status_code,
+            status_at = EXCLUDED.status_at,
+            status_message = EXCLUDED.status_message,
+            mode = EXCLUDED.mode,
+            mode_description = EXCLUDED.mode_description;
         """
 
         with self.conn.cursor() as cur:
@@ -161,6 +167,35 @@ class SQLAPI:
                     status_description,
                     mode,
                     mode_description
+                )
+
+            )
+        self.conn.commit()
+
+    # insert sensor that is not yet active
+    # INPUTS:
+    #    sensor_id (int) - unique sensor id
+    #    product_model_id (str) - hardware model id
+    def addSensorPartial(self, sensor_id, product_model_id):
+        query = """
+        
+        INSERT INTO  sensor(
+            sensor_id,
+            product_model_id
+        )
+        VALUES (
+            %s,
+            %s
+        )
+        ON CONFLICT (sensor_id) DO NOTHING;
+        """
+
+        with self.conn.cursor() as cur:
+            cur.execute(
+                query, 
+                (
+                    sensor_id, 
+                    product_model_id
                 )
 
             )

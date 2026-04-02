@@ -141,7 +141,7 @@ class PollenAPI:
             print(f'An error occurred: {err}')
             return None
 
-        df = self.json_to_dataframe(response.json())
+        df = self.jsonToDataframe(response.json())
         return(df)
 
     # convert json metrics in json format to pandas DF format
