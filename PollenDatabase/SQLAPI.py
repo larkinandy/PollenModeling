@@ -7,6 +7,9 @@
 
 import psycopg2
 from psycopg2 import sql
+import pytz
+from datetime import datetime
+
 
 class SQLAPI:
 
@@ -168,8 +171,13 @@ class SQLAPI:
     #    site_id (str) - unique site id
     #    sensor_id (int) - unique sensor id
     #    height (float) - approximate height of sensor above ground, in meters
-    #    start_time (TIMESTAMPZ) - local time monitor was first activated
+    #    start_time (TIMESTAMPZ) - UTC time monitor was first activated
     def addSiteSensorJoin(self, site_id, sensor_id, height,start_time):
+        # Convert naive datetime to UTC
+        start_time = datetime.fromisoformat(start_time)
+        if start_time.tzinfo is None:
+            start_time = start_time.replace(tzinfo=pytz.UTC)
+        print("site_id: %s, start_time: %s" %(site_id,start_time))
         query = """
         
         INSERT INTO  site_sensor_join(
@@ -184,7 +192,10 @@ class SQLAPI:
             %s,
             %s
         )
-        ON CONFLICT (site_id, sensor_id) DO NOTHING;
+        ON CONFLICT (site_id, sensor_id) 
+        DO UPDATE SET 
+            height = EXCLUDED.height,
+            since = EXCLUDED.since;
         """
 
         with self.conn.cursor() as cur:
@@ -200,11 +211,11 @@ class SQLAPI:
         self.conn.commit()
     
     # upsert start_time in site records
-    def upsertSiteStartTime(self,site_id,start_time):
+    def updateSiteStartTime(self,site_id,start_time):
         query = """
         
         UPDATE site(
-            SET start_time = %s,
+            SET start_time = %s
             WHERE site_id = %s
         )
         VALUES (
@@ -223,7 +234,56 @@ class SQLAPI:
             )
         self.conn.commit()
 
+        # upsert start_time in site records
+    def upsertLastUpdatedTime(self,site_id,sensor_id,last_updated_time):
+        query = """
+        UPDATE site_sensor_join
+            SET last_updated = %s
+            WHERE site_id = %s
+            AND sensor_id = %s;
+        """
 
+        with self.conn.cursor() as cur:
+            cur.execute(
+                query,
+                (last_updated_time, site_id, sensor_id)
+            )
+        self.conn.commit()
+
+    # insert record into hourly_flow
+    # INPUTS:
+    #    sensor_id (int) - unique sensor id
+    #    site_id (str) - unique site id
+    #    moment (TIMESTAMPTZ) - UTC timestamp of hourly measurement
+    #    cubic_meters (float) - amount of airflow in cubic meters
+    def insertHourlyFlow(self,sensor_id, site_id, moment, cubic_meters):
+        query = """
+        INSERT INTO hourly_flow(
+            sensor_id,
+            site_id,
+            moment,
+            cubic_meters
+        )
+        VALUES (
+            %s,
+            %s,
+            %s,
+            %s
+        )
+        ON CONFLICT (sensor_id, moment) DO NOTHING;
+        """
+
+        with self.conn.cursor() as cur:
+            cur.execute(
+                query, 
+                (
+                    sensor_id,
+                    site_id,
+                    moment,
+                    cubic_meters
+                )
+            )
+        self.conn.commit()
 
     # insert weekly QA record into site_weekly_qa table
     def addSiteWeeklyQA(self):
@@ -275,7 +335,29 @@ class SQLAPI:
     # update start time for sites
     # INPUTS:
     #    site_id (str) - unique site id
-    #    new_start_time (TIMESTAMPTZ) - new start time in local time
+    #    new_start_time (TIMESTAMPTZ) - new start time in UCT time
+    def updateStartTimeIfEarlier(self, site_id, new_start_time):
+        # Update start_time only if new_start_time is earlier than existing.
+        # Does NOT try to insert a new row.
+    
+        query = """
+            UPDATE site
+            SET start_time = %s
+            WHERE site_id = %s
+        """
+
+        with self.conn.cursor() as cur:
+            cur.execute(
+                query, 
+                (new_start_time,site_id, new_start_time)
+            )
+        self.conn.commit()
+
+
+    # update start time for sites
+    # INPUTS:
+    #    site_id (str) - unique site id
+    #    new_start_time (TIMESTAMPTZ) - new start time in UTC time
     def updateStartTimeIfEarlier(self, site_id, new_start_time):
         # Update start_time only if new_start_time is earlier than existing.
         # Does NOT try to insert a new row.
@@ -298,7 +380,7 @@ class SQLAPI:
     # INPUTS:
     #    site_id (str) - unique site id
     #    sensor_id (int) - unique sensor id
-    #    new_update_time (TIMESTAMPTZ) - new update time in local time
+    #    new_update_time (TIMESTAMPTZ) - new update time in UTC time
     def updateSensorLastUpdated(self, site_id, sensor_id, new_update_time):
         # Update update time only if new_update_time is later than existing.
         # Does NOT try to insert a new row.
@@ -308,7 +390,7 @@ class SQLAPI:
             SET last_updated = %s
             WHERE site_id = %s
             AND sensor_id = %s
-            AND (%s > last_updated OR last_updated IS NULL);
+            AND (%s >= last_updated OR last_updated IS NULL);
         """
 
         with self.conn.cursor() as cur:
@@ -319,6 +401,11 @@ class SQLAPI:
         self.conn.commit()
 
     # insert hourly metric into hourly_metrics table
+    # INPUTS:
+    #    moment (TIMESTAMPTZ) - UTC time of hourly metric
+    #    category_id (int) - id key for measurement category (e.g. mold, maple)
+    #    value (float) - pollen count
+    #    sensor_id (int) - unique sensor id
     def addHourlyMetric(self,moment,category_id,value,sensor_id):
         query = """
         INSERT INTO hourly_metrics(
@@ -406,6 +493,10 @@ class SQLAPI:
             results = cur.fetchall()  # list of tuples
         return results
     
+
+    # create a category lookup table 
+    # OUTPUTS:
+    #    lookup (dict) - lookup table of {category name: category_id} values
     def getCategoryLookup(self):
         query = """
             SELECT name, category_id

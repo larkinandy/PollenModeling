@@ -109,7 +109,7 @@ CREATE TABLE site_sensor_join (
 
 ALTER TABLE site_sensor_join 
 ADD COLUMN last_updated TIMESTAMPTZ
-CHECK (last_updated IS NULL OR last_updated >= start_time)
+CHECK (last_updated IS NULL OR last_updated >= since)
 
 CREATE TABLE site_weekly_qa (
 	site_id VARCHAR(100) NOT NULL REFERENCES site(site_id),
@@ -150,7 +150,7 @@ CREATE TABLE hourly_metrics (
 	PRIMARY KEY (sensor_id, category_id, moment)
 );
 
-CREATE TABLE  houlry_flow (
+CREATE TABLE  hourly_flow (
 	sensor_id INTEGER NOT NULL REFERENCES sensor(sensor_id),
 	site_id VARCHAR(100) NOT NULL REFERENCES site(site_id),
 	moment TIMESTAMPTZ NOT NULL,

@@ -111,7 +111,7 @@ class PollenAPI:
     # get hourly metrics for a single site and specific timeframe
     # INPUTS:
     #    siteId (str) - unique site id 
-    #    starttime (datetime) - start time for metric window (inclusive)
+    #    startTime (datetime) - start time for metric window (inclusive)
     #    endTime (datetime) - end time for metric window (inclusive)
     # OUTPUTS:
     #    siteMetrics (pandas dataframe) - metrics for the corresponding site and time window
@@ -144,8 +144,12 @@ class PollenAPI:
         df = self.json_to_dataframe(response.json())
         return(df)
 
-
-    def json_to_dataframe(self,data):
+    # convert json metrics in json format to pandas DF format
+    # INPUTS:
+    #    data (json) - contains houly monitor metrics in json format
+    # OURPUTS:
+    #    df (pandas dataFrame) - contains input data transformed into pandas DF format
+    def jsonToDataframe(self,data):
         moments = data["Moments"]
         cubic_meters = data["CubicMeters"]
         layers = data["Layers"]
@@ -167,6 +171,8 @@ class PollenAPI:
                     })
 
         df = ps.DataFrame(rows)
+        if(df.empty):
+            return df
         df["moment"] = ps.to_datetime(df["moment"])
 
         return df
