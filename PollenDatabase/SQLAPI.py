@@ -466,6 +466,28 @@ class SQLAPI:
                 ) 
             )
         self.conn.commit()
+
+    # update end date for site_sensor_join record
+    # INPUTS:
+    #    siteId (str) - unique site id
+    #    sensorId (int) - unique sensor id
+    #    endDate (TIMESTAMPTZ) - date sensor was unprovisioned from site
+    def updateSiteSensorEndDates(self,siteId,sensorId,endDate):
+        query = """
+            UPDATE site_sensor_join
+            SET stop_time = %s
+            WHERE site_id = %s
+            AND sensor_id = %s
+            AND (%s >= stop_time or stop_time IS NULL);
+        """
+
+        with self.conn.cursor() as cur:
+            cur.execute(
+                query, 
+                (endDate,siteId, sensorId, endDate)
+            )
+        self.conn.commit()
+
     
     # given a set of lat/lon coordinates, identify
     # the nearest city in the city table
@@ -521,6 +543,27 @@ class SQLAPI:
         SELECT site_id, sensor_id, since, last_updated 
         FROM site_sensor_join 
         WHERE stop_time is null;
+        """
+
+        with self.conn.cursor() as cur:
+            cur.execute(query)
+            results = cur.fetchall()  # list of tuples
+        return results
+  
+    
+    # get historical sensor_site combinations for querying Pollen Sense API
+    # OUTPUTs:
+    #    tuples of
+                # site_id (str) - unique site id
+                # sensor_id (int) - unique sensor id
+                # since (TIMESTAMPTZ) - when sensor was provisioned to site
+                # last_updated (TIMESTAMPTZ) - most recent hourly record from
+                #                              site_sensor combo in SQL database
+    def getHistoricalSensorSites(self):
+        query = """
+        SELECT site_id, sensor_id, since, last_updated 
+        FROM site_sensor_join 
+        WHERE stop_time is not null;
         """
 
         with self.conn.cursor() as cur:

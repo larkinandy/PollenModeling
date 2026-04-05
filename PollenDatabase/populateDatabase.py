@@ -147,6 +147,10 @@ def poulateHourlyFlow(SQL,siteId,sensorId,flowMetrics):
     lastUpdated = uniqueFlow["moment"].max()
     SQL.upsertLastUpdatedTime(siteId,sensorId,lastUpdated)
 
+def updateSiteSensorEndDates(SQL,siteId,sensorId,endDate):
+    return 0
+
+
 # return the most recent datetime. Handles None (NULL) and timezone-aware datetimes
 # INPUTS:
 #    dt1 (datetime)

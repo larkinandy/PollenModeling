@@ -108,6 +108,38 @@ class PollenAPI:
         categoryData = ps.DataFrame(response.json())
         return(categoryData)
     
+    # get provision history for a site
+    # INPUTS:
+    #    site (str) - unique site id
+    # OUTPUTS:
+    #    provisionHistory (pandas dataframe) - contains sensor id, provision start and end dates (if applicable)
+    def getProvisionHistory(self,site):
+        queryURL = self.url + "/sites/" + str(site) + "/provisions"
+        headers = {
+            "accept": "application/json",
+            "x-ps-key": self.API_KEY
+        }
+
+        try:
+            # Make the GET request
+            response = requests.get(queryURL,headers=headers)
+
+            # Check for success
+            response.raise_for_status()
+        
+        except HTTPError as http_err:
+            print(f'HTTP error occured: {http_err}')
+            return None
+
+        except requests.exceptions.RequestException as err:
+            print(f'An error occurred: {err}')
+            return None
+
+        # Parse JSON
+        provisionHistory = ps.DataFrame(response.json())
+        return(provisionHistory)
+        
+    
     # get hourly metrics for a single site and specific timeframe
     # INPUTS:
     #    siteId (str) - unique site id 
