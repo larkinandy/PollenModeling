@@ -147,9 +147,35 @@ def poulateHourlyFlow(SQL,siteId,sensorId,flowMetrics):
     lastUpdated = uniqueFlow["moment"].max()
     SQL.upsertLastUpdatedTime(siteId,sensorId,lastUpdated)
 
-def updateSiteSensorEndDates(SQL,siteId,sensorId,endDate):
-    return 0
+# update provision history for one site
+# INPUTS:
+#    site (str) - unique site id
+#    SQL (SQL API class) - custom SQL API object
+#    pollen (pollen API class) - custom pollen API object
+def updateProvisionHistoryOneSite(site,SQL,pollen):
+    entireHistory = pollen.getProvisionHistory(site)
+    if(entireHistory.empty): return
+    entireHistory.sort_values(by='Starting', ascending=False, inplace=True)
+    if(entireHistory.empty): return
+    newestHistory = entireHistory.drop_duplicates(subset = ['DeviceId'])
+    if not('Ending' in newestHistory.columns): return
+    endedDevices = newestHistory[newestHistory['Ending'].notna()]
+    if(endedDevices.empty): return
+    nEnded = endedDevices.count().iloc[0]
+    print("number of ended devices: %i" %(nEnded))
+    for endNum in range(nEnded):
+        curEnd = endedDevices.iloc[endNum]
+        SQL.updateSiteSensorEndDates(site,int(curEnd['DeviceId']),curEnd['Ending'])
 
+
+# update provision histories for all sites
+# INPUTS:
+#    SQL (SQL API class) - custom SQL API object
+#    pollen (pollen API class) - custom pollen API object
+def updateProvisionHistories(SQL,pollen):
+    siteIds = SQL.getAllSiteIds()
+    for site in siteIds:
+        updateProvisionHistoryOneSite(site[0],SQL,pollen)
 
 # return the most recent datetime. Handles None (NULL) and timezone-aware datetimes
 # INPUTS:
@@ -211,3 +237,4 @@ if __name__ == "__main__":
     populateSensors(pollen,SQL)
     populateSiteSensorJoin(pollen,SQL)
     updateActiveSensorHourly(SQL,pollen)
+    updateProvisionHistories(SQL,pollen)

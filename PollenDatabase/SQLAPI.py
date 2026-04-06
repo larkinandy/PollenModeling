@@ -591,6 +591,16 @@ class SQLAPI:
         return lookup
 
     
+    def getAllSiteIds(self):
+        query = """
+        SELECT DISTINCT site_id
+        FROM site_sensor_join;
+        """
+
+        with self.conn.cursor() as cur:
+            cur.execute(query)
+            results = cur.fetchall()  # list of tuples
+        return results
 
    ### SQL API isn't needed yet for retrieval operations.
 
