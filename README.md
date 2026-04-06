@@ -21,6 +21,7 @@ Files are divided into five folders, with each folder corresponding to a specifi
 **External Links**
 - **[Funding: NIH/NIEHS, 1R01HL178727-01](https://www.niehs.nih.gov/)**
 - **[Pollen Sense](https://pollensense.com/)**
+- **[Spiromics Study](https://www.spiromics.org/spiromics/)**
 - **[Spatial Health Lab](https://health.oregonstate.edu/research/spatial-health)**
 - **[Publication TODO: add publication once available**])
   
