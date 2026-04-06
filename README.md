@@ -16,7 +16,7 @@ Files are divided into five folders, with each folder corresponding to a specifi
 - **[EnvironmentDatabase](https://github.com/larkinandy/PollenModeling/tree/main/EnvironmentDatabase)** - store environmental information (e.g. tree inventories). Might be merged with Pollen Database in a future revision <br>
 - **[VisualizationTools](https://github.com/larkinandy/PollenModeling/tree/main/VisualizationTools)** - dashboards for investigating relationships between the environment and pollen levels <br>
 - **[ModelDevelopment](https://github.com/larkinandy/PollenModeling/tree/main/ModelDevelopment)** - develop the pollen prediction model (exact methods and architecture TBD) <br>
-- **[ModelImplementation](https://github.com/larkinandy/PollenModeling/tree/main/ModelDevelopment)** - apply the developed model to SPIROMICs cities <br>
+- **[ModelImplementation](https://github.com/larkinandy/PollenModeling/tree/main/ModelDevelopment)** - apply the developed model to SPIROMICS cities <br>
 
 **External Links**
 - **[Funding: NIH/NIEHS, 1R01HL178727-01](https://www.niehs.nih.gov/)**
