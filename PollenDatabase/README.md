@@ -6,9 +6,9 @@ The pollen database folder contains the following components.
 - **[Entity Relationship Diagram](https://github.com/larkinandy/PollenModeling/tree/main/PollenDatabase)** - database schema and strucutre <br>
 - **[Data Dictionary](https://github.com/larkinandy/PollenModeling/tree/main/EnvironmentDatabase)** - table properties and column metadata in human readable form <br>
 - **[CreateTables.txt](https://github.com/larkinandy/PollenModeling/tree/main/VisualizationTools)** - SQL commands used to create and update tables and constraints/checks <br>
-- **[PollenSenseAPI.py](https://github.com/larkinandy/PollenModeling/tree/main/ModelDevelopment)** - custom class to query the Pollen Sense API<br>
-- **[SQLAPI.py](https://github.com/larkinandy/PollenModeling/tree/main/ModelDevelopment)** - custom class to in query and update the pollen SQL database<br>
-- **[PopulateDatabase.py](https://github.com/larkinandy/PollenModeling/tree/main/ModelDevelopment)** - script for query the pollen sense API and upserting the SQL database <br>
+- **[PollenSenseAPI.py](https://github.com/larkinandy/PollenModeling/tree/main/PollenDatabase/PollenSenseAPI.py)** - custom class to query the Pollen Sense API<br>
+- **[SQLAPI.py](https://github.com/larkinandy/PollenModeling/tree/main/PollenDatabase/SQLAPI.py)** - custom class to in query and update the pollen SQL database<br>
+- **[populateDatabase.py](https://github.com/larkinandy/PollenModeling/tree/main/PollenDatabase/populateDatabase.py)** - script for query the pollen sense API and upserting the SQL database <br>
 
 **TODO:**
 - ER diagram
