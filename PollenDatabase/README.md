@@ -13,7 +13,6 @@ The pollen database folder contains the following components.
 **TODO:**
 - ER diagram
 - add daily statistics table (site and city) and populate
-- provision history
 - add PPM column to hourly_metrics and populate
 
 
