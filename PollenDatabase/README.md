@@ -1,4 +1,4 @@
-<img src = "https://github.com/larkinandy/PollenModeling/blob/main/Images/pollen_ER_diagram.png" width="1024">
+<img src = "https://github.com/larkinandy/PollenModeling/blob/main/Images/pollen_ER_diagram.png" width="720">
 
 
 # PollenDatabase
@@ -6,7 +6,6 @@ PostGIS database for storing pollen metrics. Designed for pollen modeling at mod
 
 **Folder Structure** <br>
 The pollen database folder contains the following components.
-- **[Entity Relationship Diagram](https://github.com/larkinandy/PollenModeling/tree/main/PollenDatabase)** - database schema and strucutre <br>
 - **[Data Dictionary](https://github.com/larkinandy/PollenModeling/blob/main/PollenDatabase/Data_Dictionary.xlsx)** - table properties and column metadata in human readable form <br>
 - **[CreateTables.txt](https://github.com/larkinandy/PollenModeling/tree/main/VisualizationTools)** - SQL commands used to create and update tables and constraints/checks <br>
 - **[PollenSenseAPI.py](https://github.com/larkinandy/PollenModeling/tree/main/PollenDatabase/PollenSenseAPI.py)** - custom class to query the Pollen Sense API<br>
@@ -14,8 +13,7 @@ The pollen database folder contains the following components.
 - **[populateDatabase.py](https://github.com/larkinandy/PollenModeling/tree/main/PollenDatabase/populateDatabase.py)** - script for query the pollen sense API and upserting the SQL database <br>
 
 **TODO:**
-- ER diagram
-- add daily statistics table (site and city) and populate
+- add daily metrics table (site and city) and populate
 - add PPM column to hourly_metrics and populate
 
 
