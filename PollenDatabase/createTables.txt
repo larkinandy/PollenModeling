@@ -9,7 +9,7 @@ CREATE table city (
 	start_time TIMESTAMPTZ,
 	stop_time TIMESTAMPTZ,
 	study_region_name varchar(20),
-	in_study BOOLEAN NOT NULL DEFAULT false;
+	in_study BOOLEAN NOT NULL DEFAULT false,
 	CHECK (stop_time IS NULL OR stop_time > start_time),
 	PRIMARY KEY (city_id)
 );
@@ -146,8 +146,6 @@ CREATE TABLE hourly_metrics (
 	ppm DOUBLE PRECISION CHECK (ppm >=0),
 	PRIMARY KEY (sensor_id, category_id, moment)
 );
-
-ALTER TABLE hourly_metrics ADD column ppm DOUBLE PRECISION CHECK (ppm >=0);
 
 CREATE TABLE hourly_flow (
 	sensor_id INTEGER NOT NULL REFERENCES sensor(sensor_id),
