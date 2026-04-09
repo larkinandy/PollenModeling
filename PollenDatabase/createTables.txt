@@ -102,14 +102,10 @@ CREATE TABLE site_sensor_join (
 	sensor_id INTEGER REFERENCES sensor(sensor_id) NOT NULL,
 	height DOUBLE PRECISION CHECK (height >= 0) ,
 	since TIMESTAMPTZ,
-	last_updated TIMESTAMPTZ,
+	last_updated TIMESTAMPTZ CHECK (last_updated IS NULL OR last_updated >= since),
 	stop_time TIMESTAMPTZ,
 	PRIMARY KEY (site_id,sensor_id)
 );
-
-ALTER TABLE site_sensor_join 
-ADD COLUMN last_updated TIMESTAMPTZ
-CHECK (last_updated IS NULL OR last_updated >= since)
 
 CREATE TABLE site_weekly_qa (
 	site_id VARCHAR(100) NOT NULL REFERENCES site(site_id),
@@ -147,10 +143,13 @@ CREATE TABLE hourly_metrics (
 	category_id INTEGER NOT NULL REFERENCES category(category_id),
 	moment TIMESTAMPTZ NOT NULL,
 	pcount DOUBLE PRECISION NOT NULL CHECK (pcount >= 0),
+	ppm DOUBLE PRECISION CHECK (ppm >=0),
 	PRIMARY KEY (sensor_id, category_id, moment)
 );
 
-CREATE TABLE  hourly_flow (
+ALTER TABLE hourly_metrics ADD column ppm DOUBLE PRECISION CHECK (ppm >=0);
+
+CREATE TABLE hourly_flow (
 	sensor_id INTEGER NOT NULL REFERENCES sensor(sensor_id),
 	site_id VARCHAR(100) NOT NULL REFERENCES site(site_id),
 	moment TIMESTAMPTZ NOT NULL,

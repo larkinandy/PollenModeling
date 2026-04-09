@@ -7,8 +7,8 @@
 
 import psycopg2
 from psycopg2 import sql
-import pytz
-from datetime import datetime
+from datetime import datetime, timezone
+import pandas as ps
 
 
 class SQLAPI:
@@ -29,6 +29,35 @@ class SQLAPI:
             host = h,
             port = p
         )
+
+        # 🔥 Force UTC for this connection
+        with self.conn.cursor() as cur:
+            cur.execute("SET TIME ZONE 'UTC';")
+        self.conn.commit()
+
+    
+    def ensure_utc(self,dt):
+        if dt is None:
+            return None
+
+        # Handle pandas Timestamp
+        if isinstance(dt, ps.Timestamp):
+            if dt.tz is None:
+                return dt.tz_localize("UTC").to_pydatetime()
+            return dt.tz_convert("UTC").to_pydatetime()
+
+        # Handle string
+        if isinstance(dt, str):
+            dt = datetime.fromisoformat(dt)
+
+        # Handle datetime
+        if isinstance(dt, datetime):
+            if dt.tzinfo is None:
+                return dt.replace(tzinfo=timezone.utc)
+            return dt.astimezone(timezone.utc)
+
+        raise TypeError(f"Unsupported datetime type: {type(dt)}")
+
 
     # test if database connection was sucessful
     # OUTPUTS:
@@ -162,7 +191,7 @@ class SQLAPI:
                     sensor_id, 
                     product_model_id, 
                     status_code, 
-                    status_at,
+                    self.ensure_utc(status_at),
                     status_message,
                     status_description,
                     mode,
@@ -209,9 +238,8 @@ class SQLAPI:
     #    start_time (TIMESTAMPZ) - UTC time monitor was first activated
     def addSiteSensorJoin(self, site_id, sensor_id, height,start_time):
         # Convert naive datetime to UTC
-        start_time = datetime.fromisoformat(start_time)
-        if start_time.tzinfo is None:
-            start_time = start_time.replace(tzinfo=pytz.UTC)
+        print(start_time)
+        start_time = self.ensure_utc(start_time)
         print("site_id: %s, start_time: %s" %(site_id,start_time))
         query = """
         
@@ -249,7 +277,7 @@ class SQLAPI:
     def updateSiteStartTime(self,site_id,start_time):
         query = """
         
-        UPDATE site(
+        UPDATE site
             SET start_time = %s
             WHERE site_id = %s
         )
@@ -263,7 +291,7 @@ class SQLAPI:
             cur.execute(
                 query, 
                 (
-                    start_time,
+                    self.ensure_utc(start_time),
                     site_id,
                 )
             )
@@ -281,7 +309,7 @@ class SQLAPI:
         with self.conn.cursor() as cur:
             cur.execute(
                 query,
-                (last_updated_time, site_id, sensor_id)
+                (self.ensure_utc(last_updated_time), site_id, sensor_id)
             )
         self.conn.commit()
 
@@ -314,7 +342,7 @@ class SQLAPI:
                 (
                     sensor_id,
                     site_id,
-                    moment,
+                    self.ensure_utc(moment),
                     cubic_meters
                 )
             )
@@ -370,28 +398,6 @@ class SQLAPI:
     # update start time for sites
     # INPUTS:
     #    site_id (str) - unique site id
-    #    new_start_time (TIMESTAMPTZ) - new start time in UCT time
-    def updateStartTimeIfEarlier(self, site_id, new_start_time):
-        # Update start_time only if new_start_time is earlier than existing.
-        # Does NOT try to insert a new row.
-    
-        query = """
-            UPDATE site
-            SET start_time = %s
-            WHERE site_id = %s
-        """
-
-        with self.conn.cursor() as cur:
-            cur.execute(
-                query, 
-                (new_start_time,site_id, new_start_time)
-            )
-        self.conn.commit()
-
-
-    # update start time for sites
-    # INPUTS:
-    #    site_id (str) - unique site id
     #    new_start_time (TIMESTAMPTZ) - new start time in UTC time
     def updateStartTimeIfEarlier(self, site_id, new_start_time):
         # Update start_time only if new_start_time is earlier than existing.
@@ -407,7 +413,7 @@ class SQLAPI:
         with self.conn.cursor() as cur:
             cur.execute(
                 query, 
-                (new_start_time,site_id, new_start_time)
+                (self.ensure_utc(new_start_time),site_id, self.ensure_utc(new_start_time))
             )
         self.conn.commit()
 
@@ -431,7 +437,7 @@ class SQLAPI:
         with self.conn.cursor() as cur:
             cur.execute(
                 query, 
-                (new_update_time,site_id, sensor_id, new_update_time)
+                (self.ensure_utc(new_update_time),site_id, sensor_id, self.ensure_utc(new_update_time))
             )
         self.conn.commit()
 
@@ -459,7 +465,7 @@ class SQLAPI:
             cur.execute(
                 query, 
                 (
-                    moment, 
+                    self.ensure_utc(moment), 
                     category_id, 
                     value, 
                     sensor_id,
@@ -484,7 +490,7 @@ class SQLAPI:
         with self.conn.cursor() as cur:
             cur.execute(
                 query, 
-                (endDate,siteId, sensorId, endDate)
+                (self.ensure_utc(endDate),siteId, sensorId, self.ensure_utc(endDate))
             )
         self.conn.commit()
 
@@ -590,6 +596,20 @@ class SQLAPI:
         
         return lookup
 
+    def getNullPPMs(self):
+        query = """
+            SELECT *
+            FROM hourly_flow f
+            JOIN hourly_metrics m
+            ON f.sensor_id = m.sensor_id
+            AND f.moment = m.moment
+            WHERE m.ppm IS NULL;
+        """
+
+        with self.conn.cursor() as cur:
+            cur.execute(query)
+            results = cur.fetchall()  # list of tuples
+        return results
     
     def getAllSiteIds(self):
         query = """

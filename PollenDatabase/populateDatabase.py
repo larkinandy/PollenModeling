@@ -107,6 +107,7 @@ def populateSensors(pollen,SQL):
 #    SQL (SQLAPI class) - custom SQLAPI object
 def populateSiteSensorJoin(pollen,SQL):
     sensors = pollen.getSensors()
+    sensors = sensors[sensors['SiteId'].notna()]
     #sensors = sensors[sensors['StatusCode']>-999]
     #sensors = sensors[sensors['Height']>-999]
     nSensors = sensors.count().iloc[0]
@@ -123,6 +124,7 @@ def populateSiteSensorJoin(pollen,SQL):
 #    sensorId (int) - unique sensor id
 #    categoryLookup (dict) - key value pairs of {lookup name (str) : lookup_id (int)}
 def populateHourlyMetricsOneSensorSite(sensorMetrics,SQL,sensorId,categoryLookup):
+    sensorMetrics['moment'] = sensorMetrics['moment'].apply(SQL.ensure_utc)
     validMeasures = sensorMetrics.dropna(subset=["value"])
     nMeasures = validMeasures.count().iloc[0]
     print("sensor %i has %i new measures" %(sensorId,nMeasures))
@@ -138,12 +140,13 @@ def populateHourlyMetricsOneSensorSite(sensorMetrics,SQL,sensorId,categoryLookup
 #    sensorId (int) - unique sensor id
 #    flowMetrics (pandas dataframe) - flow metrics to add to table
 def poulateHourlyFlow(SQL,siteId,sensorId,flowMetrics):
+    flowMetrics['moment'] = flowMetrics['moment'].apply(SQL.ensure_utc)
     validFlow = flowMetrics.dropna(subset=['cubic_meters'])
     uniqueFlow = validFlow.drop_duplicates(subset=["moment","cubic_meters"])
     nUniques = uniqueFlow.count().iloc[0]
     for uniqueNum in range(nUniques):
         curFlowMeas = uniqueFlow.iloc[uniqueNum]
-        SQL.insertHourlyFlow(sensorId,siteId,curFlowMeas['moment'],curFlowMeas['cubic_meters'])
+        SQL.insertHourlyFlow(sensorId,siteId,curFlowMeas['moment'],float(curFlowMeas['cubic_meters']))
     lastUpdated = uniqueFlow["moment"].max()
     SQL.upsertLastUpdatedTime(siteId,sensorId,lastUpdated)
 
@@ -154,6 +157,7 @@ def poulateHourlyFlow(SQL,siteId,sensorId,flowMetrics):
 #    pollen (pollen API class) - custom pollen API object
 def updateProvisionHistoryOneSite(site,SQL,pollen):
     entireHistory = pollen.getProvisionHistory(site)
+    entireHistory['Starting'] = entireHistory['Starting'].apply(SQL.ensure_utc)
     if(entireHistory.empty): return
     entireHistory.sort_values(by='Starting', ascending=False, inplace=True)
     if(entireHistory.empty): return
@@ -182,14 +186,14 @@ def updateProvisionHistories(SQL,pollen):
 #    dt1 (datetime)
 #    dt2 (datetime)
 def getMostRecent(dt1, dt2):
-
-    # Handle NULLs (None)
     if dt1 is None:
         return dt2
     if dt2 is None:
         return dt1
 
-    # Both exist → safe to compare
+    dt1 = SQL.ensure_utc(dt1)
+    dt2 = SQL.ensure_utc(dt2)
+
     return max(dt1, dt2)
 
 # limit API queries to one week of metrics. Otherwise may get a 400 error code
@@ -198,13 +202,20 @@ def getMostRecent(dt1, dt2):
 #    endTime (datetime) - end of query window
 def capOneWeek(startTime, endTime):
 
+    startTime = SQL.ensure_utc(startTime)
+    endTime = SQL.ensure_utc(endTime)
     oneWeekLater = startTime + relativedelta(weeks=1)
 
     if endTime > oneWeekLater:
         return oneWeekLater, True
     else:
         return endTime, False
-    
+
+def calcPPMOneSite(siteId,SQL):
+    nullPPMs = SQL.getNullPPMs(siteId)
+    print(nullPPMs)
+
+
 # update hourly metrics of active sensors
 # INPUTS:
 #    pollen (PollenAPI class) - custom Pollen API object
@@ -232,9 +243,9 @@ def updateActiveSensorHourly(SQL,pollen):
 
 
 if __name__ == "__main__":
-    populateCities(GIT_PATH + "CBSA_Table.csv",SQL)
+    #populateCities(GIT_PATH + "CBSA_Table.csv",SQL)
     populateSites(pollen,SQL)
     populateSensors(pollen,SQL)
     populateSiteSensorJoin(pollen,SQL)
     updateActiveSensorHourly(SQL,pollen)
-    updateProvisionHistories(SQL,pollen)
+    #updateProvisionHistories(SQL,pollen)
