@@ -1,3 +1,6 @@
+<img src = "https://github.com/larkinandy/PollenModeling/blob/main/Images/pollen_ER_diagram.png" width="1024">
+
+
 # PollenDatabase
 PostGIS database for storing pollen metrics. Designed for pollen modeling at moderate resolution (e.g. neighborhood) in a small number (5-7) of core based statistical areas.
 
