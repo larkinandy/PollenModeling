@@ -215,6 +215,20 @@ def calcPPMOneSite(siteId,SQL):
     nullPPMs = SQL.getNullPPMs(siteId)
     print(nullPPMs)
 
+# calculate daily concentrations for all monitors and supported allergen types
+# INPUTS:
+#    SQL (SQL API class) - custom SQL API object
+#    start_date (date-like) - first daily date to calculate, inclusive
+#    end_date (date-like) - last daily date to calculate, inclusive
+#    day_timezone (str) - timezone used to assign hourly records to dates
+def populateDailyConcentrations(SQL, start_date=None, end_date=None, day_timezone="UTC"):
+    nRows = SQL.upsertDailyConcentrations(
+        start_date=start_date,
+        end_date=end_date,
+        day_timezone=day_timezone
+    )
+    print("upserted %i daily concentration rows" % (nRows))
+
 
 # update hourly metrics of active sensors
 # INPUTS:
@@ -236,6 +250,12 @@ def updateActiveSensorHourly(SQL,pollen):
             if(dt_utc != queryEnd):
                 print("updating sensor %i" %(curActive[1]))
                 curMetrics = pollen.getHourlyMetricsSiteSensor(curActive[0],curActive[1],dt_utc,queryEnd)
+                if curMetrics is None:
+                    print(
+                        "skipping sensor %i at site %s for %s to %s because the metrics API query failed"
+                        % (curActive[1], curActive[0], dt_utc.isoformat(), queryEnd.isoformat())
+                    )
+                    break
                 if not(curMetrics.empty):
                     populateHourlyMetricsOneSensorSite(curMetrics,SQL,curActive[1],categoryLookup)
                     poulateHourlyFlow(SQL,curActive[0],curActive[1],curMetrics)
@@ -248,4 +268,5 @@ if __name__ == "__main__":
     populateSensors(pollen,SQL)
     populateSiteSensorJoin(pollen,SQL)
     updateActiveSensorHourly(SQL,pollen)
+    populateDailyConcentrations(SQL)
     #updateProvisionHistories(SQL,pollen)

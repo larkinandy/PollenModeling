@@ -155,9 +155,24 @@ CREATE TABLE hourly_flow (
 	PRIMARY KEY (sensor_id, moment)
 );
 
+CREATE TABLE daily_metrics (
+	site_id VARCHAR(100) NOT NULL REFERENCES site(site_id),
+	metric_date DATE NOT NULL,
+	allergen_type VARCHAR(50) NOT NULL,
+	pcount DOUBLE PRECISION NOT NULL CHECK (pcount >= 0),
+	cubic_meters DOUBLE PRECISION NOT NULL CHECK (cubic_meters > 0),
+	concentration DOUBLE PRECISION NOT NULL CHECK (concentration >= 0),
+	n_hours INTEGER NOT NULL CHECK (n_hours >= 1 AND n_hours <= 24),
+	n_flow_measurements INTEGER NOT NULL CHECK (n_flow_measurements >= 1),
+	updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	PRIMARY KEY (site_id, metric_date, allergen_type)
+);
+
 CREATE INDEX idx_site_location ON site USING GIST (location);
 CREATE INDEX idx_city_center ON city USING GIST (center_location);
 CREATE INDEX idx_hourly_sensor_time ON hourly_metrics (sensor_id, moment);
 CREATE INDEX ON hourly_metrics (sensor_id, moment);
 CREATE INDEX idx_hourly_metrics_brin ON hourly_metrics USING BRIN (moment);
 CREATE INDEX idx_hourly_category ON hourly_metrics (category_id);
+CREATE INDEX idx_daily_metrics_site_date ON daily_metrics (site_id, metric_date);
+CREATE INDEX idx_daily_metrics_allergen ON daily_metrics (allergen_type);
