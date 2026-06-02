@@ -12,11 +12,6 @@ The pollen database folder contains the following components.
 - **[SQLAPI.py](https://github.com/larkinandy/PollenModeling/tree/main/PollenDatabase/SQLAPI.py)** - custom class to in query and update the pollen SQL database<br>
 - **[populateDatabase.py](https://github.com/larkinandy/PollenModeling/tree/main/PollenDatabase/populateDatabase.py)** - script for query the pollen sense API and upserting the SQL database <br>
 
-**TODO:**
-- add daily metrics table (site and city) and populate
-- add PPM column to hourly_metrics and populate
-
-
 **External Links**
 - **[PostGIS](https://postgis.net/)**
 - **[Pollen Sense](https://pollensense.com/)**
