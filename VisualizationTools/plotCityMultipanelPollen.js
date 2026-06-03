@@ -1,8 +1,9 @@
 const fs = require("fs");
 const path = require("path");
 
-const inputPath = "city_site_daily_concentrations.csv";
-const outputDir = "city_pollen_multipanel_figures";
+const outputRoot = "outputs";
+const inputPath = path.join(outputRoot, "city_site_daily_concentrations.csv");
+const outputDir = path.join(outputRoot, "city_pollen_multipanel_figures");
 
 const allergenOrder = [
   "Total Pollen",

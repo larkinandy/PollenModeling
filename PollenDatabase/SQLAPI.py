@@ -671,17 +671,45 @@ class SQLAPI:
     ):
         self.ensureDailyMetricsTable()
         query = """
-        WITH category_matches AS (
-            SELECT 'Total Pollen' AS allergen_type, category_id
+        WITH RECURSIVE category_descendants AS (
+            SELECT
+                category_id,
+                name,
+                group_code,
+                root_group_code,
+                description,
+                common_name,
+                name AS ancestor_name,
+                ARRAY[name]::varchar[] AS path
             FROM category
-            WHERE lower(concat_ws(' ', name, group_code, root_group_code, description, common_name)) NOT LIKE '%%mold%%'
-              AND lower(concat_ws(' ', name, group_code, root_group_code, description, common_name)) NOT LIKE '%%fung%%'
 
             UNION ALL
-            SELECT 'Total Tree Pollen' AS allergen_type, category_id
-            FROM category
-            WHERE lower(concat_ws(' ', group_code, root_group_code, description, common_name)) LIKE '%%tree%%'
-               OR lower(root_group_code) IN ('tree', 'trees', 'tree_pollen')
+
+            SELECT
+                child.category_id,
+                child.name,
+                child.group_code,
+                child.root_group_code,
+                child.description,
+                child.common_name,
+                parent.ancestor_name,
+                parent.path || child.name
+            FROM category child
+            JOIN category_descendants parent
+              ON child.group_code = parent.name
+            WHERE NOT child.name = ANY(parent.path)
+        ),
+        category_matches AS (
+            SELECT DISTINCT 'Total Pollen' AS allergen_type, category_id
+            FROM category_descendants
+            WHERE ancestor_name = 'POL'
+               OR name = 'POL'
+
+            UNION ALL
+            SELECT DISTINCT 'Total Tree Pollen' AS allergen_type, category_id
+            FROM category_descendants
+            WHERE ancestor_name = 'TRE'
+               OR name = 'TRE'
 
             UNION ALL
             SELECT 'Quercus (Oak)' AS allergen_type, category_id
@@ -742,10 +770,10 @@ class SQLAPI:
                OR lower(concat_ws(' ', name, description, common_name)) LIKE '%%pinus%%'
 
             UNION ALL
-            SELECT 'Total Grass Pollen' AS allergen_type, category_id
-            FROM category
-            WHERE lower(concat_ws(' ', group_code, root_group_code, description, common_name)) LIKE '%%grass%%'
-               OR lower(concat_ws(' ', name, description, common_name)) LIKE '%%poaceae%%'
+            SELECT DISTINCT 'Total Grass Pollen' AS allergen_type, category_id
+            FROM category_descendants
+            WHERE ancestor_name = 'GRA'
+               OR name = 'GRA'
 
             UNION ALL
             SELECT 'Ambrosia (Ragweed)' AS allergen_type, category_id

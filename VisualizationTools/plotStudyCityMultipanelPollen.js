@@ -1,272 +1,191 @@
 const fs = require("fs");
 const path = require("path");
 
-const inputPath = "study_city_site_daily_concentrations.csv";
-const outputDir = "study_city_pollen_multipanel_figures";
+const outputRoot = "outputs";
+const inputPath = path.join(outputRoot, "study_city_site_daily_concentrations.csv");
+const outputDir = path.join(outputRoot, "study_city_pollen_multipanel_figures");
+const threshold = 12;
+const excludedSiteNames = new Set([
+  "ch1", "ch1-out", "ch2", "ch2-out", "ch3", "ch3-out", "ch4", "ch4-out",
+]);
 
-const allergenOrder = [
-  "Total Pollen",
-  "Total Tree Pollen",
-  "Quercus (Oak)",
-  "Cupressaceae (Cypress)",
-  "Morus (Mulberry)",
-  "Ulmus (Elm)",
-  "Fraxinus (Ash)",
-  "Betula (Birch)",
-  "Acer (Maple)",
-  "Populus (Poplar)",
-  "Pinaceae (Pine)",
-  "Total Grass Pollen",
-  "Ambrosia (Ragweed)",
-  "Poaceae (Grasses)",
-  "Total Mold",
+const allergens = [
+  "Total Pollen", "Total Tree Pollen", "Quercus (Oak)", "Cupressaceae (Cypress)",
+  "Morus (Mulberry)", "Ulmus (Elm)", "Fraxinus (Ash)", "Betula (Birch)",
+  "Acer (Maple)", "Populus (Poplar)", "Pinaceae (Pine)", "Total Grass Pollen",
+  "Ambrosia (Ragweed)", "Poaceae (Grasses)", "Total Mold",
 ];
 
-const palette = [
+const colors = [
   "#2563eb", "#dc2626", "#059669", "#9333ea", "#ea580c", "#0891b2",
   "#be123c", "#4d7c0f", "#7c3aed", "#0f766e", "#b45309", "#1d4ed8",
+  "#db2777", "#64748b", "#84cc16", "#0ea5e9", "#f97316", "#14b8a6",
 ];
 
-function parseCsvLine(line) {
-  const values = [];
-  let value = "";
+function csvLine(line) {
+  const out = [];
+  let cur = "";
   let quoted = false;
   for (let i = 0; i < line.length; i++) {
-    const char = line[i];
-    const next = line[i + 1];
-    if (char === '"' && quoted && next === '"') {
-      value += '"';
-      i++;
-    } else if (char === '"') {
+    const ch = line[i];
+    if (ch === '"' && quoted && line[i + 1] === '"') {
+      cur += '"'; i++;
+    } else if (ch === '"') {
       quoted = !quoted;
-    } else if (char === "," && !quoted) {
-      values.push(value);
-      value = "";
+    } else if (ch === "," && !quoted) {
+      out.push(cur); cur = "";
     } else {
-      value += char;
+      cur += ch;
     }
   }
-  values.push(value);
-  return values;
+  out.push(cur);
+  return out;
 }
 
-function escapeXml(value) {
-  return String(value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+function esc(x) {
+  return String(x).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-function slugify(value) {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+function slug(x) {
+  return x.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
 }
 
-function niceCeiling(value) {
-  if (!Number.isFinite(value) || value <= 0) return 1;
-  const exponent = Math.floor(Math.log10(value));
-  const magnitude = 10 ** exponent;
-  const normalized = value / magnitude;
-  const nice = normalized <= 1 ? 1 : normalized <= 2 ? 2 : normalized <= 5 ? 5 : 10;
-  return nice * magnitude;
-}
-
-function formatDate(date) {
-  return date.toISOString().slice(5, 10);
+function niceMax(x) {
+  if (!Number.isFinite(x) || x <= 0) return 1;
+  const m = 10 ** Math.floor(Math.log10(x));
+  const n = x / m;
+  return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * m;
 }
 
 const lines = fs.readFileSync(inputPath, "utf8").trim().split(/\r?\n/);
-const header = parseCsvLine(lines[0]);
+const header = csvLine(lines[0]);
 const data = lines.slice(1).map((line) => {
-  const values = parseCsvLine(line);
-  const row = Object.fromEntries(header.map((key, index) => [key, values[index]]));
+  const values = csvLine(line);
+  const row = Object.fromEntries(header.map((h, i) => [h, values[i]]));
   return {
-    cityDesignation: row.city_designation,
+    city: row.city_designation,
     siteId: row.site_id,
     siteName: row.site_name || row.site_id.slice(0, 8),
-    date: new Date(`${row.metric_date}T00:00:00Z`),
     dateText: row.metric_date,
-    allergenType: row.allergen_type,
+    date: new Date(`${row.metric_date}T00:00:00Z`),
+    allergen: row.allergen_type,
     concentration: Number(row.concentration),
-    nFlowMeasurements: Number(row.n_flow_measurements),
+    nFlow: Number(row.n_flow_measurements || 0),
   };
-});
+}).filter((row) => !excludedSiteNames.has(row.siteName.trim().toLowerCase()));
 
 fs.mkdirSync(outputDir, { recursive: true });
 
-const cities = [...new Set(data.map((d) => d.cityDesignation))].sort((a, b) => a.localeCompare(b));
-const outputs = [];
+const cities = [...new Set(data.map((d) => d.city))].sort();
+const dayMs = 86400000;
 
-for (const cityDesignation of cities) {
-  const cityData = data.filter((d) => d.cityDesignation === cityDesignation);
+for (const city of cities) {
+  const cityData = data.filter((d) => d.city === city);
   const sites = [...new Map(cityData.map((d) => [d.siteId, d.siteName])).entries()]
     .map(([siteId, siteName]) => ({ siteId, siteName }))
     .sort((a, b) => a.siteName.localeCompare(b.siteName));
-  const colorBySite = new Map(sites.map((site, index) => [site.siteId, palette[index % palette.length]]));
+  const color = new Map(sites.map((s, i) => [s.siteId, colors[i % colors.length]]));
+  const minDate = new Date(Math.min(...cityData.map((d) => d.date)));
+  const maxDate = new Date(Math.max(...cityData.map((d) => d.date)));
+  const span = Math.max(dayMs, maxDate - minDate);
 
-  const minDate = new Date(Math.min(...cityData.map((d) => d.date.getTime())));
-  const maxDate = new Date(Math.max(...cityData.map((d) => d.date.getTime())));
-  const dayMs = 24 * 60 * 60 * 1000;
-  const span = Math.max(dayMs, maxDate.getTime() - minDate.getTime());
+  const W = 1500, panelW = 610, panelH = 260, gapX = 58, gapY = 58, left = 74, top = 126;
+  const rows = Math.ceil(allergens.length / 2);
+  const coverageTop = top + rows * panelH + (rows - 1) * gapY + 88;
+  const rowH = 22, labelW = 154, gridW = panelW * 2 + gapX - labelW;
+  const H = coverageTop + sites.length * rowH + 128;
+  let svg = `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">\n<rect width="100%" height="100%" fill="#fff"/>\n`;
+  svg += `<text x="${left}" y="44" font-family="Arial" font-size="28" font-weight="700" fill="#111827">${esc(city)} Daily Pollen Concentrations</text>\n`;
+  svg += `<text x="${left}" y="72" font-family="Arial" font-size="15" fill="#4b5563">${minDate.toISOString().slice(0,10)} to ${maxDate.toISOString().slice(0,10)}. Pollen panels only show days with &gt;50% positive-flow measurements. Units: pollen grains/m3.</text>\n`;
 
-  const pageWidth = 1500;
-  const columns = 2;
-  const panelWidth = 610;
-  const panelHeight = 260;
-  const panelGapX = 58;
-  const panelGapY = 58;
-  const headerHeight = 126;
-  const leftMargin = 74;
-  const topMargin = headerHeight;
-  const legendX = leftMargin + columns * panelWidth + panelGapX + 20;
-  const rowsNeeded = Math.ceil(allergenOrder.length / columns);
-  const coverageTop = topMargin + rowsNeeded * panelHeight + (rowsNeeded - 1) * panelGapY + 88;
-  const coverageRowHeight = 22;
-  const coverageHeight = 56 + sites.length * coverageRowHeight;
-  const pageHeight = coverageTop + coverageHeight + 72;
+  const legendX = 1372;
+  svg += `<text x="${legendX}" y="44" font-family="Arial" font-size="15" font-weight="700" fill="#111827">Sites</text>\n`;
+  sites.forEach((s, i) => {
+    const y = 70 + i * 21;
+    svg += `<rect x="${legendX}" y="${y - 8}" width="14" height="14" fill="${color.get(s.siteId)}" stroke="#111827" stroke-width="0.4"/>\n`;
+    svg += `<text x="${legendX + 22}" y="${y + 5}" font-family="Arial" font-size="13" fill="#111827">${esc(s.siteName)}</text>\n`;
+  });
 
-  function panelX(column) {
-    return leftMargin + column * (panelWidth + panelGapX);
+  function xScale(date, x0) { return x0 + ((date - minDate) / span) * panelW; }
+  function yScale(v, y0, ymax) { return y0 + panelH - (v / ymax) * panelH; }
+  const ticks = [];
+  for (let t = new Date(minDate); t <= maxDate; t = new Date(t.getTime() + 30 * dayMs)) ticks.push(new Date(t));
+  if (!ticks.length || ticks[ticks.length - 1].getTime() !== maxDate.getTime()) ticks.push(maxDate);
+
+  allergens.forEach((allergen, i) => {
+    const col = i % 2, row = Math.floor(i / 2);
+    const x0 = left + col * (panelW + gapX), y0 = top + row * (panelH + gapY);
+    const panel = cityData.filter((d) => d.allergen === allergen && d.nFlow > threshold);
+    const ymax = niceMax(Math.max(0, ...panel.map((d) => d.concentration)));
+    svg += `<text x="${x0}" y="${y0 - 14}" font-family="Arial" font-size="16" font-weight="700" fill="#111827">${esc(allergen)}</text>\n`;
+    svg += `<rect x="${x0}" y="${y0}" width="${panelW}" height="${panelH}" fill="#fff" stroke="#d1d5db"/>\n`;
+    [0, ymax / 2, ymax].forEach((v) => {
+      const y = yScale(v, y0, ymax);
+      svg += `<line x1="${x0}" y1="${y}" x2="${x0 + panelW}" y2="${y}" stroke="#e5e7eb"/>
+<text x="${x0 - 8}" y="${y + 4}" text-anchor="end" font-family="Arial" font-size="11">${Number(v.toPrecision(3))}</text>\n`;
+    });
+    ticks.forEach((t) => {
+      const x = xScale(t, x0);
+      svg += `<line x1="${x}" y1="${y0}" x2="${x}" y2="${y0 + panelH}" stroke="#f3f4f6"/>
+<text x="${x}" y="${y0 + panelH + 18}" text-anchor="middle" font-family="Arial" font-size="10">${t.toISOString().slice(5,10)}</text>\n`;
+    });
+    sites.forEach((s) => {
+      const sd = panel.filter((d) => d.siteId === s.siteId).sort((a, b) => a.date - b.date);
+      if (!sd.length) return;
+      const pts = sd.map((d) => `${xScale(d.date, x0).toFixed(2)},${yScale(d.concentration, y0, ymax).toFixed(2)}`).join(" ");
+      svg += `<polyline points="${pts}" fill="none" stroke="${color.get(s.siteId)}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>\n`;
+    });
+  });
+
+  const dates = [];
+  for (let d = new Date(minDate); d <= maxDate; d = new Date(d.getTime() + dayMs)) dates.push(new Date(d));
+  const cov = new Map();
+  cityData.forEach((d) => {
+    const key = `${d.siteId}|${d.dateText}`;
+    cov.set(key, Math.max(cov.get(key) || 0, d.nFlow));
+  });
+  const gridX = left + labelW, gridY = coverageTop, cellW = gridW / dates.length;
+  const gridHeight = sites.length * rowH;
+  svg += `<text x="${left}" y="${coverageTop - 34}" font-family="Arial" font-size="18" font-weight="700">Daily coverage by site</text>\n`;
+  svg += `<text x="${left}" y="${coverageTop - 12}" font-family="Arial" font-size="13" fill="#4b5563">Green: &gt;12 measurements. Gray: 1-12 measurements. Pink: 0 measurements.</text>\n`;
+  svg += `<rect x="${left}" y="${gridY}" width="${labelW + gridW}" height="${gridHeight}" fill="#ffffff" stroke="#9ca3af" stroke-width="1"/>\n`;
+  sites.forEach((s, i) => {
+    const y = gridY + i * rowH;
+    svg += `<rect x="${left}" y="${y}" width="${labelW}" height="${rowH}" fill="${i % 2 ? "#f9fafb" : "#fff"}" stroke="#d1d5db" stroke-width="0.7"/>\n`;
+    svg += `<text x="${left + 8}" y="${y + 15}" font-family="Arial" font-size="12">${esc(s.siteName)}</text>\n`;
+    dates.forEach((d, j) => {
+      const ds = d.toISOString().slice(0, 10);
+      const n = cov.get(`${s.siteId}|${ds}`) || 0;
+      const fill = n > threshold ? "#16a34a" : n === 0 ? "#fca5a5" : "#e5e7eb";
+      svg += `<rect x="${(gridX + j * cellW).toFixed(2)}" y="${y}" width="${Math.max(cellW, 0.8).toFixed(2)}" height="${rowH}" fill="${fill}" stroke="#ffffff" stroke-width="0.25"><title>${esc(s.siteName)} ${ds}: ${n} measurements</title></rect>\n`;
+    });
+  });
+  for (let i = 0; i <= sites.length; i++) {
+    const y = gridY + i * rowH;
+    svg += `<line x1="${left}" y1="${y}" x2="${left + labelW + gridW}" y2="${y}" stroke="#9ca3af" stroke-width="0.45"/>\n`;
   }
-
-  function panelY(row) {
-    return topMargin + row * (panelHeight + panelGapY);
+  for (let j = 0; j <= dates.length; j++) {
+    const x = gridX + j * cellW;
+    svg += `<line x1="${x.toFixed(2)}" y1="${gridY}" x2="${x.toFixed(2)}" y2="${gridY + gridHeight}" stroke="#9ca3af" stroke-width="0.35"/>\n`;
   }
-
-  function xScale(date, x0) {
-    return x0 + ((date.getTime() - minDate.getTime()) / span) * panelWidth;
-  }
-
-  function yScale(value, y0, yMax) {
-    return y0 + panelHeight - (value / yMax) * panelHeight;
-  }
-
-  const xTicks = [];
-  for (
-    let tick = new Date(Date.UTC(minDate.getUTCFullYear(), minDate.getUTCMonth(), minDate.getUTCDate()));
-    tick <= maxDate;
-    tick = new Date(tick.getTime() + 30 * dayMs)
-  ) {
-    xTicks.push(tick);
-  }
-  if (xTicks.length === 0 || xTicks[xTicks.length - 1].getTime() !== maxDate.getTime()) {
-    xTicks.push(maxDate);
-  }
-
-  const allDates = [];
-  for (
-    let day = new Date(Date.UTC(minDate.getUTCFullYear(), minDate.getUTCMonth(), minDate.getUTCDate()));
-    day <= maxDate;
-    day = new Date(day.getTime() + dayMs)
-  ) {
-    allDates.push(new Date(day.getTime()));
-  }
-
-  const coverageBySiteDate = new Map();
-  for (const row of cityData) {
-    const key = `${row.siteId}|${row.dateText}`;
-    const previous = coverageBySiteDate.get(key) || 0;
-    coverageBySiteDate.set(key, Math.max(previous, row.nFlowMeasurements || 0));
-  }
-
-  let svg = `<?xml version="1.0" encoding="UTF-8"?>\n`;
-  svg += `<svg xmlns="http://www.w3.org/2000/svg" width="${pageWidth}" height="${pageHeight}" viewBox="0 0 ${pageWidth} ${pageHeight}">\n`;
-  svg += `<rect width="100%" height="100%" fill="#ffffff"/>\n`;
-  svg += `<text x="${leftMargin}" y="44" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">${escapeXml(cityDesignation)} Daily Pollen Concentrations</text>\n`;
-  svg += `<text x="${leftMargin}" y="72" font-family="Arial, sans-serif" font-size="15" fill="#4b5563">${minDate.toISOString().slice(0, 10)} to ${maxDate.toISOString().slice(0, 10)}. Lines are monitor sites; concentration units are pollen grains/m3.</text>\n`;
-  svg += `<text x="${legendX}" y="44" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#111827">Sites</text>\n`;
-
-  let legendY = 70;
-  for (const site of sites) {
-    const color = colorBySite.get(site.siteId);
-    svg += `<rect x="${legendX}" y="${legendY - 8}" width="14" height="14" fill="${color}" stroke="#111827" stroke-width="0.4"/>\n`;
-    svg += `<text x="${legendX + 38}" y="${legendY + 5}" font-family="Arial, sans-serif" font-size="13" fill="#111827">${escapeXml(site.siteName)}</text>\n`;
-    legendY += 21;
-  }
-
-  for (const [panelIndex, allergenType] of allergenOrder.entries()) {
-    const column = panelIndex % columns;
-    const row = Math.floor(panelIndex / columns);
-    const x0 = panelX(column);
-    const y0 = panelY(row);
-    const panelData = cityData.filter(
-      (d) => d.allergenType === allergenType && d.nFlowMeasurements > 12
-    );
-    const yMax = niceCeiling(Math.max(...panelData.map((d) => d.concentration), 0));
-    const yTicks = [0, yMax / 2, yMax];
-
-    svg += `<text x="${x0}" y="${y0 - 14}" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#111827">${escapeXml(allergenType)}</text>\n`;
-    svg += `<rect x="${x0}" y="${y0}" width="${panelWidth}" height="${panelHeight}" fill="#ffffff" stroke="#d1d5db" stroke-width="1"/>\n`;
-
-    for (const value of yTicks) {
-      const y = yScale(value, y0, yMax);
-      svg += `<line x1="${x0}" y1="${y.toFixed(2)}" x2="${x0 + panelWidth}" y2="${y.toFixed(2)}" stroke="#e5e7eb" stroke-width="1"/>\n`;
-      svg += `<text x="${x0 - 8}" y="${(y + 4).toFixed(2)}" text-anchor="end" font-family="Arial, sans-serif" font-size="11" fill="#374151">${Number(value.toPrecision(3))}</text>\n`;
-    }
-
-    for (const date of xTicks) {
-      const x = xScale(date, x0);
-      svg += `<line x1="${x.toFixed(2)}" y1="${y0}" x2="${x.toFixed(2)}" y2="${y0 + panelHeight}" stroke="#f3f4f6" stroke-width="1"/>\n`;
-      svg += `<text x="${x.toFixed(2)}" y="${y0 + panelHeight + 18}" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#374151">${formatDate(date)}</text>\n`;
-    }
-
-    for (const site of sites) {
-      const siteData = panelData.filter((d) => d.siteId === site.siteId).sort((a, b) => a.date - b.date);
-      if (siteData.length === 0) continue;
-      const color = colorBySite.get(site.siteId);
-      const points = siteData.map((d) => `${xScale(d.date, x0).toFixed(2)},${yScale(d.concentration, y0, yMax).toFixed(2)}`).join(" ");
-      svg += `<polyline points="${points}" fill="none" stroke="${color}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>\n`;
-      for (const d of siteData) {
-        svg += `<circle cx="${xScale(d.date, x0).toFixed(2)}" cy="${yScale(d.concentration, y0, yMax).toFixed(2)}" r="1.8" fill="${color}"><title>${escapeXml(site.siteName)} ${d.dateText}: ${d.concentration.toFixed(2)}</title></circle>\n`;
-      }
-    }
-  }
-
-  const coverageX0 = leftMargin;
-  const coverageY0 = coverageTop;
-  const labelWidth = 154;
-  const coverageWidth = columns * panelWidth + panelGapX;
-  const gridX0 = coverageX0 + labelWidth;
-  const gridWidth = coverageWidth - labelWidth;
-  const cellWidth = gridWidth / allDates.length;
-  const gridHeight = sites.length * coverageRowHeight;
-
-  svg += `<text x="${coverageX0}" y="${coverageY0 - 34}" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#111827">Daily coverage by site</text>\n`;
-  svg += `<text x="${coverageX0}" y="${coverageY0 - 12}" font-family="Arial, sans-serif" font-size="13" fill="#4b5563">Green cells have more than 12 positive-flow measurements. Gray cells do not meet the threshold or have no daily record.</text>\n`;
-  svg += `<rect x="${coverageX0}" y="${coverageY0}" width="${coverageWidth}" height="${gridHeight}" fill="#ffffff" stroke="#d1d5db" stroke-width="1"/>\n`;
-
-  for (const [siteIndex, site] of sites.entries()) {
-    const y = coverageY0 + siteIndex * coverageRowHeight;
-    svg += `<rect x="${coverageX0}" y="${y}" width="${labelWidth}" height="${coverageRowHeight}" fill="${siteIndex % 2 === 0 ? "#ffffff" : "#f9fafb"}" stroke="#e5e7eb" stroke-width="1"/>\n`;
-    svg += `<text x="${coverageX0 + 8}" y="${y + 15}" font-family="Arial, sans-serif" font-size="12" fill="#111827">${escapeXml(site.siteName)}</text>\n`;
-
-    for (const [dateIndex, date] of allDates.entries()) {
-      const dateText = date.toISOString().slice(0, 10);
-      const nFlow = coverageBySiteDate.get(`${site.siteId}|${dateText}`) || 0;
-      const x = gridX0 + dateIndex * cellWidth;
-      const fill = nFlow > 12 ? "#16a34a" : nFlow === 0 ? "#fca5a5" : "#e5e7eb";
-      svg += `<rect x="${x.toFixed(2)}" y="${y}" width="${Math.max(cellWidth, 0.8).toFixed(2)}" height="${coverageRowHeight}" fill="${fill}" stroke="#ffffff" stroke-width="0.4"><title>${escapeXml(site.siteName)} ${dateText}: ${nFlow} positive-flow measurements</title></rect>\n`;
-    }
-  }
-
-  for (const date of xTicks) {
-    const x = gridX0 + ((date.getTime() - minDate.getTime()) / Math.max(dayMs, maxDate.getTime() - minDate.getTime() + dayMs)) * gridWidth;
-    svg += `<line x1="${x.toFixed(2)}" y1="${coverageY0}" x2="${x.toFixed(2)}" y2="${coverageY0 + gridHeight}" stroke="#9ca3af" stroke-width="0.7"/>\n`;
-    svg += `<text x="${x.toFixed(2)}" y="${coverageY0 + gridHeight + 18}" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#374151">${formatDate(date)}</text>\n`;
-  }
-
-  svg += `<rect x="${coverageX0}" y="${coverageY0 + gridHeight + 34}" width="13" height="13" fill="#16a34a"/>\n`;
-  svg += `<text x="${coverageX0 + 20}" y="${coverageY0 + gridHeight + 45}" font-family="Arial, sans-serif" font-size="12" fill="#111827">&gt;50% daily coverage</text>\n`;
-  svg += `<rect x="${coverageX0 + 162}" y="${coverageY0 + gridHeight + 34}" width="13" height="13" fill="#e5e7eb"/>\n`;
-  svg += `<text x="${coverageX0 + 182}" y="${coverageY0 + gridHeight + 45}" font-family="Arial, sans-serif" font-size="12" fill="#111827">1-12 measurements</text>\n`;
-  svg += `<rect x="${coverageX0 + 314}" y="${coverageY0 + gridHeight + 34}" width="13" height="13" fill="#fca5a5"/>\n`;
-  svg += `<text x="${coverageX0 + 334}" y="${coverageY0 + gridHeight + 45}" font-family="Arial, sans-serif" font-size="12" fill="#111827">0 measurements</text>\n`;
-
-  const outputPath = path.join(outputDir, `${slugify(cityDesignation)}_pollen_multipanel.svg`);
+  svg += `<line x1="${gridX}" y1="${gridY}" x2="${gridX}" y2="${gridY + gridHeight}" stroke="#111827" stroke-width="1"/>\n`;
+  ticks.forEach((t) => {
+    const dayIndex = Math.round((t - minDate) / dayMs);
+    const x = gridX + Math.max(0, Math.min(dates.length - 1, dayIndex)) * cellW + cellW / 2;
+    svg += `<line x1="${x.toFixed(2)}" y1="${gridY}" x2="${x.toFixed(2)}" y2="${gridY + gridHeight}" stroke="#374151" stroke-width="0.8"/>\n`;
+    svg += `<text x="${x.toFixed(2)}" y="${gridY + gridHeight + 18}" text-anchor="middle" font-family="Arial" font-size="10" fill="#374151">${t.toISOString().slice(5,10)}</text>\n`;
+  });
+  const legendY = gridY + gridHeight + 38;
+  svg += `<rect x="${left}" y="${legendY - 11}" width="13" height="13" fill="#16a34a" stroke="#9ca3af" stroke-width="0.4"/>\n`;
+  svg += `<text x="${left + 20}" y="${legendY}" font-family="Arial" font-size="12" fill="#111827">&gt;50% daily coverage</text>\n`;
+  svg += `<rect x="${left + 172}" y="${legendY - 11}" width="13" height="13" fill="#e5e7eb" stroke="#9ca3af" stroke-width="0.4"/>\n`;
+  svg += `<text x="${left + 192}" y="${legendY}" font-family="Arial" font-size="12" fill="#111827">1-12 measurements</text>\n`;
+  svg += `<rect x="${left + 324}" y="${legendY - 11}" width="13" height="13" fill="#fca5a5" stroke="#9ca3af" stroke-width="0.4"/>\n`;
+  svg += `<text x="${left + 344}" y="${legendY}" font-family="Arial" font-size="12" fill="#111827">0 measurements</text>\n`;
   svg += `</svg>\n`;
-  fs.writeFileSync(outputPath, svg);
-  outputs.push(outputPath);
+  fs.writeFileSync(path.join(outputDir, `${slug(city)}_pollen_multipanel.svg`), svg);
 }
 
-console.log(`Wrote ${outputs.length} study-city multipanel SVG files to ${outputDir}.`);
-for (const output of outputs) console.log(output);
+console.log(`Wrote ${cities.length} SVG files to ${outputDir}.`);
+
+

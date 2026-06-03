@@ -7,3 +7,12 @@
 # ignore compiled python scripts
 *.pyc
 
+# ignore generated visualization products
+VisualizationTools/outputs/
+
+# ignore local site identifiers and location exports
+local_site_ids.txt
+*site_ids*.txt
+*site_locations*.csv
+*site_locations*.txt
+
