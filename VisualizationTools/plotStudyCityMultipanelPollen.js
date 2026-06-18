@@ -75,6 +75,11 @@ const data = lines.slice(1).map((line) => {
 }).filter((row) => !excludedSiteNames.has(row.siteName.trim().toLowerCase()));
 
 fs.mkdirSync(outputDir, { recursive: true });
+for (const file of fs.readdirSync(outputDir)) {
+  if (file.endsWith("_pollen_multipanel.svg")) {
+    fs.unlinkSync(path.join(outputDir, file));
+  }
+}
 
 const cities = [...new Set(data.map((d) => d.city))].sort();
 const dayMs = 86400000;
@@ -96,7 +101,7 @@ for (const city of cities) {
   const H = coverageTop + sites.length * rowH + 128;
   let svg = `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">\n<rect width="100%" height="100%" fill="#fff"/>\n`;
   svg += `<text x="${left}" y="44" font-family="Arial" font-size="28" font-weight="700" fill="#111827">${esc(city)} Daily Pollen Concentrations</text>\n`;
-  svg += `<text x="${left}" y="72" font-family="Arial" font-size="15" fill="#4b5563">${minDate.toISOString().slice(0,10)} to ${maxDate.toISOString().slice(0,10)}. Pollen panels only show days with &gt;50% positive-flow measurements. Units: pollen grains/m3.</text>\n`;
+  svg += `<text x="${left}" y="72" font-family="Arial" font-size="15" fill="#4b5563">${minDate.toISOString().slice(0,10)} to ${maxDate.toISOString().slice(0,10)}. Panels use direct category rows, e.g. POL and TRE are not summed with descendants. Units: pollen grains/m3.</text>\n`;
 
   const legendX = 1372;
   svg += `<text x="${legendX}" y="44" font-family="Arial" font-size="15" font-weight="700" fill="#111827">Sites</text>\n`;

@@ -54,7 +54,7 @@ UPDATE city
 SET in_study = true
 WHERE city_id IN (20500, 25780, 39580, 41820, 38240, 24660,	15500, 49180);
 UPDATE city
-SET study_region_name = 'Raleigh'
+SET study_region_name = 'Winston-Salem'
 WHERE city_id IN (20500, 25780, 39580, 41820, 38240, 24660,	15500, 49180);
 
 UPDATE city

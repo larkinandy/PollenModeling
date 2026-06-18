@@ -62,6 +62,10 @@ function pdf(W,H,content) {
 }
 
 let count = 0;
+for (const file of fs.readdirSync(dir).filter(x => x.endsWith("_pollen_multipanel.pdf"))) {
+  fs.unlinkSync(path.join(dir, file));
+}
+
 for (const file of fs.readdirSync(dir).filter(x => x.endsWith(".svg"))) {
   const svg = fs.readFileSync(path.join(dir,file), "utf8");
   const root = attrs(svg.match(/<svg[^>]+>/)[0]);

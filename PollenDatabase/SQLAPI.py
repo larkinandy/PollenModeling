@@ -671,160 +671,74 @@ class SQLAPI:
     ):
         self.ensureDailyMetricsTable()
         query = """
-        WITH RECURSIVE category_descendants AS (
-            SELECT
-                category_id,
-                name,
-                group_code,
-                root_group_code,
-                description,
-                common_name,
-                name AS ancestor_name,
-                ARRAY[name]::varchar[] AS path
-            FROM category
-
-            UNION ALL
-
-            SELECT
-                child.category_id,
-                child.name,
-                child.group_code,
-                child.root_group_code,
-                child.description,
-                child.common_name,
-                parent.ancestor_name,
-                parent.path || child.name
-            FROM category child
-            JOIN category_descendants parent
-              ON child.group_code = parent.name
-            WHERE NOT child.name = ANY(parent.path)
+        WITH category_matches AS (
+            SELECT category_map.allergen_type, c.category_id
+            FROM (
+                VALUES
+                    ('Total Pollen', 'POL'),
+                    ('Total Tree Pollen', 'TRE'),
+                    ('Quercus (Oak)', 'QUE'),
+                    ('Cupressaceae (Cypress)', 'CUP'),
+                    ('Morus (Mulberry)', 'MOR'),
+                    ('Ulmus (Elm)', 'ULM'),
+                    ('Fraxinus (Ash)', 'FRA'),
+                    ('Betula (Birch)', 'BET'),
+                    ('Acer (Maple)', 'ACE'),
+                    ('Populus (Poplar)', 'POP'),
+                    ('Pinaceae (Pine)', 'PIN'),
+                    ('Total Grass Pollen', 'GRA'),
+                    ('Ambrosia (Ragweed)', 'AMB-IVA'),
+                    ('Poaceae (Grasses)', 'POA'),
+                    ('Total Mold', 'MOL')
+            ) AS category_map(allergen_type, category_code)
+            JOIN category c
+              ON c.name = category_map.category_code
         ),
-        category_matches AS (
-            SELECT DISTINCT 'Total Pollen' AS allergen_type, category_id
-            FROM category_descendants
-            WHERE ancestor_name = 'POL'
-               OR name = 'POL'
-
-            UNION ALL
-            SELECT DISTINCT 'Total Tree Pollen' AS allergen_type, category_id
-            FROM category_descendants
-            WHERE ancestor_name = 'TRE'
-               OR name = 'TRE'
-
-            UNION ALL
-            SELECT 'Quercus (Oak)' AS allergen_type, category_id
-            FROM category
-            WHERE lower(concat_ws(' ', name, description, common_name)) LIKE '%%quercus%%'
-               OR lower(concat_ws(' ', name, description, common_name)) LIKE '%%oak%%'
-
-            UNION ALL
-            SELECT 'Cupressaceae (Cypress)' AS allergen_type, category_id
-            FROM category
-            WHERE lower(concat_ws(' ', name, description, common_name)) LIKE '%%cupressaceae%%'
-               OR lower(concat_ws(' ', name, description, common_name)) LIKE '%%cypress%%'
-               OR lower(concat_ws(' ', name, description, common_name)) LIKE '%%cedar%%'
-               OR lower(concat_ws(' ', name, description, common_name)) LIKE '%%juniper%%'
-
-            UNION ALL
-            SELECT 'Morus (Mulberry)' AS allergen_type, category_id
-            FROM category
-            WHERE lower(concat_ws(' ', name, description, common_name)) LIKE '%%morus%%'
-               OR lower(concat_ws(' ', name, description, common_name)) LIKE '%%mulberry%%'
-
-            UNION ALL
-            SELECT 'Ulmus (Elm)' AS allergen_type, category_id
-            FROM category
-            WHERE lower(concat_ws(' ', name, description, common_name)) LIKE '%%ulmus%%'
-               OR lower(concat_ws(' ', name, description, common_name)) LIKE '%%elm%%'
-
-            UNION ALL
-            SELECT 'Fraxinus (Ash)' AS allergen_type, category_id
-            FROM category
-            WHERE lower(concat_ws(' ', name, description, common_name)) LIKE '%%fraxinus%%'
-               OR lower(concat_ws(' ', name, description, common_name)) LIKE '%%ash%%'
-
-            UNION ALL
-            SELECT 'Betula (Birch)' AS allergen_type, category_id
-            FROM category
-            WHERE lower(concat_ws(' ', name, description, common_name)) LIKE '%%betula%%'
-               OR lower(concat_ws(' ', name, description, common_name)) LIKE '%%birch%%'
-
-            UNION ALL
-            SELECT 'Acer (Maple)' AS allergen_type, category_id
-            FROM category
-            WHERE lower(concat_ws(' ', name, description, common_name)) LIKE '%%acer%%'
-               OR lower(concat_ws(' ', name, description, common_name)) LIKE '%%maple%%'
-
-            UNION ALL
-            SELECT 'Populus (Poplar)' AS allergen_type, category_id
-            FROM category
-            WHERE lower(concat_ws(' ', name, description, common_name)) LIKE '%%populus%%'
-               OR lower(concat_ws(' ', name, description, common_name)) LIKE '%%poplar%%'
-               OR lower(concat_ws(' ', name, description, common_name)) LIKE '%%cottonwood%%'
-
-            UNION ALL
-            SELECT 'Pinaceae (Pine)' AS allergen_type, category_id
-            FROM category
-            WHERE lower(concat_ws(' ', name, description, common_name)) LIKE '%%pinaceae%%'
-               OR lower(concat_ws(' ', name, description, common_name)) LIKE '%%pine%%'
-               OR lower(concat_ws(' ', name, description, common_name)) LIKE '%%pinus%%'
-
-            UNION ALL
-            SELECT DISTINCT 'Total Grass Pollen' AS allergen_type, category_id
-            FROM category_descendants
-            WHERE ancestor_name = 'GRA'
-               OR name = 'GRA'
-
-            UNION ALL
-            SELECT 'Ambrosia (Ragweed)' AS allergen_type, category_id
-            FROM category
-            WHERE lower(concat_ws(' ', name, description, common_name)) LIKE '%%ambrosia%%'
-               OR lower(concat_ws(' ', name, description, common_name)) LIKE '%%ragweed%%'
-
-            UNION ALL
-            SELECT 'Poaceae (Grasses)' AS allergen_type, category_id
-            FROM category
-            WHERE lower(concat_ws(' ', name, description, common_name)) LIKE '%%poaceae%%'
-               OR lower(concat_ws(' ', name, description, common_name)) LIKE '%%grasses%%'
-
-            UNION ALL
-            SELECT 'Total Mold' AS allergen_type, category_id
-            FROM category
-            WHERE lower(concat_ws(' ', name, group_code, root_group_code, description, common_name)) LIKE '%%mold%%'
-               OR lower(concat_ws(' ', name, group_code, root_group_code, description, common_name)) LIKE '%%fung%%'
+        allergen_types AS (
+            SELECT DISTINCT allergen_type
+            FROM category_matches
+        ),
+        flow_hours AS (
+            SELECT
+                f.site_id,
+                f.sensor_id,
+                f.moment,
+                (f.moment AT TIME ZONE %s)::date AS metric_date,
+                f.cubic_meters
+            FROM hourly_flow f
+            WHERE f.cubic_meters > 0
+              AND (%s::date IS NULL OR (f.moment AT TIME ZONE %s)::date >= %s::date)
+              AND (%s::date IS NULL OR (f.moment AT TIME ZONE %s)::date <= %s::date)
         ),
         hourly_allergen AS (
             SELECT
-                f.site_id,
-                (m.moment AT TIME ZONE %s)::date AS metric_date,
-                cm.allergen_type,
                 m.sensor_id,
                 m.moment,
-                SUM(m.pcount) AS pcount,
-                MAX(f.cubic_meters) AS cubic_meters
+                cm.allergen_type,
+                SUM(m.pcount) AS pcount
             FROM hourly_metrics m
-            JOIN hourly_flow f
-              ON f.sensor_id = m.sensor_id
-             AND f.moment = m.moment
             JOIN category_matches cm
               ON cm.category_id = m.category_id
-            WHERE (%s::date IS NULL OR (m.moment AT TIME ZONE %s)::date >= %s::date)
-              AND (%s::date IS NULL OR (m.moment AT TIME ZONE %s)::date <= %s::date)
-            GROUP BY f.site_id, (m.moment AT TIME ZONE %s)::date, cm.allergen_type, m.sensor_id, m.moment
+            GROUP BY m.sensor_id, m.moment, cm.allergen_type
         ),
         daily AS (
             SELECT
-                site_id,
-                metric_date,
-                allergen_type,
-                SUM(pcount) AS pcount,
-                SUM(cubic_meters) AS cubic_meters,
-                SUM(pcount) / SUM(cubic_meters) AS concentration,
-                COUNT(DISTINCT moment) AS n_hours,
-                COUNT(*) FILTER (WHERE cubic_meters > 0) AS n_flow_measurements
-            FROM hourly_allergen
-            GROUP BY site_id, metric_date, allergen_type
-            HAVING SUM(cubic_meters) > %s
+                fh.site_id,
+                fh.metric_date,
+                at.allergen_type,
+                SUM(COALESCE(ha.pcount, 0)) AS pcount,
+                SUM(fh.cubic_meters) AS cubic_meters,
+                SUM(COALESCE(ha.pcount, 0)) / SUM(fh.cubic_meters) AS concentration,
+                COUNT(DISTINCT fh.moment) AS n_hours,
+                COUNT(*) AS n_flow_measurements
+            FROM flow_hours fh
+            CROSS JOIN allergen_types at
+            LEFT JOIN hourly_allergen ha
+              ON ha.sensor_id = fh.sensor_id
+             AND ha.moment = fh.moment
+             AND ha.allergen_type = at.allergen_type
+            GROUP BY fh.site_id, fh.metric_date, at.allergen_type
+            HAVING SUM(fh.cubic_meters) > %s
         )
         INSERT INTO daily_metrics (
             site_id,
@@ -864,7 +778,6 @@ class SQLAPI:
             end_date,
             day_timezone,
             end_date,
-            day_timezone,
             min_cubic_meters,
         )
 

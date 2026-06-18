@@ -173,7 +173,7 @@ for (const city of cities) {
   svg += `<svg xmlns="http://www.w3.org/2000/svg" width="${pageWidth}" height="${pageHeight}" viewBox="0 0 ${pageWidth} ${pageHeight}">\n`;
   svg += `<rect width="100%" height="100%" fill="#ffffff"/>\n`;
   svg += `<text x="${leftMargin}" y="44" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">${escapeXml(city.cityName)} Daily Pollen Concentrations</text>\n`;
-  svg += `<text x="${leftMargin}" y="72" font-family="Arial, sans-serif" font-size="15" fill="#4b5563">${minDate.toISOString().slice(0, 10)} to ${maxDate.toISOString().slice(0, 10)}. Lines are monitor sites; concentration units are pollen grains/m3.</text>\n`;
+  svg += `<text x="${leftMargin}" y="72" font-family="Arial, sans-serif" font-size="15" fill="#4b5563">${minDate.toISOString().slice(0, 10)} to ${maxDate.toISOString().slice(0, 10)}. Direct category rows are plotted; POL and TRE are not summed with descendants. Units: pollen grains/m3.</text>\n`;
   svg += `<text x="${legendX}" y="44" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#111827">Sites</text>\n`;
 
   let legendY = 70;
