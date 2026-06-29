@@ -1,0 +1,700 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ann Arbor Pollen Study Dashboard Mockup</title>
+  <style>
+    :root {
+      --ink: #18212b;
+      --muted: #5f6f7c;
+      --line: #d9e1e6;
+      --paper: #f7f9f8;
+      --panel: #ffffff;
+      --green: #26785f;
+      --green-soft: #e6f2ed;
+      --blue: #2d6f9f;
+      --blue-soft: #e8f1f7;
+      --gold: #9a6b12;
+      --gold-soft: #fbf1d8;
+      --rose: #9c4a5a;
+      --rose-soft: #f7e7ea;
+      --shadow: 0 12px 30px rgba(25, 42, 53, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+      letter-spacing: 0;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 280px 1fr;
+    }
+
+    aside {
+      background: #20313a;
+      color: #f2f6f4;
+      padding: 24px 20px;
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .brand {
+      font-size: 15px;
+      font-weight: 700;
+      margin: 0 0 4px;
+    }
+
+    .region {
+      font-size: 28px;
+      line-height: 1.05;
+      margin: 0 0 18px;
+      font-weight: 750;
+    }
+
+    .side-note {
+      color: #cbd9d7;
+      line-height: 1.45;
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+
+    .control {
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      padding-top: 18px;
+      margin-top: 18px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      color: #cbd9d7;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    select,
+    .check-list {
+      width: 100%;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.08);
+      color: #f2f6f4;
+      border-radius: 6px;
+      padding: 10px 11px;
+      font-size: 14px;
+    }
+
+    .check-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .check-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .check-box {
+      width: 15px;
+      height: 15px;
+      border-radius: 3px;
+      background: #91c7b4;
+      border: 1px solid #d5eee5;
+      display: inline-block;
+    }
+
+    main {
+      padding: 24px;
+      min-width: 0;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: flex-start;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 30px;
+      line-height: 1.12;
+    }
+
+    .lede {
+      max-width: 820px;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.45;
+      margin: 0;
+    }
+
+    .stamp {
+      text-align: right;
+      color: var(--muted);
+      font-size: 13px;
+      min-width: 190px;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .metric,
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .metric {
+      padding: 15px 16px;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 26px;
+      margin-top: 5px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.16fr) minmax(360px, 0.84fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .panel {
+      padding: 18px;
+      min-width: 0;
+    }
+
+    .panel + .panel {
+      margin-top: 16px;
+    }
+
+    .full-width-panel {
+      margin-top: 16px;
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: baseline;
+      margin-bottom: 14px;
+    }
+
+    h2 {
+      font-size: 18px;
+      margin: 0;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 11px;
+      text-align: left;
+      text-transform: uppercase;
+      padding: 0 10px 8px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    td {
+      padding: 11px 10px 11px 0;
+      border-bottom: 1px solid #edf1f3;
+      vertical-align: middle;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .pollen-name {
+      font-weight: 700;
+    }
+
+    .bar-cell {
+      min-width: 150px;
+    }
+
+    .coverage-cell {
+      min-width: 150px;
+    }
+
+    .coverage-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 5px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .bar-track {
+      height: 9px;
+      background: #edf2f1;
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .bar {
+      height: 100%;
+      border-radius: 99px;
+      background: var(--green);
+    }
+
+    .bar.blue {
+      background: var(--blue);
+    }
+
+    .bar.gold {
+      background: #c58b19;
+    }
+
+    .bar.rose {
+      background: var(--rose);
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .summary {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 13px;
+      background: #fbfcfc;
+    }
+
+    .summary h3 {
+      margin: 0 0 8px;
+      font-size: 14px;
+    }
+
+    .summary .value {
+      font-size: 24px;
+      font-weight: 750;
+      margin-bottom: 6px;
+    }
+
+    .summary .caption {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .range-line {
+      height: 8px;
+      border-radius: 99px;
+      background: linear-gradient(90deg, #dce9e5, #8fbfae, #26785f);
+      margin: 9px 0 6px;
+    }
+
+    .time-chart {
+      height: 270px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      background:
+        linear-gradient(#eef3f4 1px, transparent 1px) 0 0 / 100% 25%,
+        #fbfcfc;
+      position: relative;
+    }
+
+    .spark {
+      position: absolute;
+      left: 15px;
+      right: 15px;
+      top: 20px;
+      bottom: 26px;
+    }
+
+    .axis-labels {
+      position: absolute;
+      left: 15px;
+      right: 15px;
+      bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .trend-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .line-key {
+      width: 18px;
+      height: 3px;
+      border-radius: 99px;
+      display: inline-block;
+    }
+
+    .map-wrap {
+      position: relative;
+      height: 470px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #e8efed;
+    }
+
+    .map-svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .legend {
+      position: absolute;
+      left: 14px;
+      bottom: 14px;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 10px;
+      width: 190px;
+      font-size: 12px;
+    }
+
+    .legend-scale {
+      height: 10px;
+      border-radius: 99px;
+      background: linear-gradient(90deg, #d5eadf, #f3d17c, #c35f62);
+      margin: 7px 0;
+    }
+
+    .callout {
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 8px;
+      background: var(--blue-soft);
+      color: #214f6f;
+      line-height: 1.4;
+      font-size: 13px;
+    }
+
+    @media (max-width: 1000px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      aside {
+        display: none;
+      }
+
+      .grid,
+      .metrics,
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar {
+        display: block;
+      }
+
+      .stamp {
+        text-align: left;
+        margin-top: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside>
+      <p class="brand">Pollen Monitoring Study</p>
+      <p class="region">Ann Arbor</p>
+      <p class="side-note">Public dashboard concept focused on study awareness, data collection progress, and spatial variation in measured pollen.</p>
+
+      <div class="control">
+        <label for="pollen">Pollen group</label>
+        <select id="pollen">
+          <option>Total tree pollen</option>
+          <option>Total pollen</option>
+          <option>Oak</option>
+          <option>Maple</option>
+          <option>Grass</option>
+          <option>Weed and shrub</option>
+        </select>
+      </div>
+
+      <div class="control">
+        <label>Visible study areas</label>
+        <div class="check-list">
+          <div class="check-row"><span class="check-box"></span> North Campus</div>
+          <div class="check-row"><span class="check-box"></span> Kerrytown</div>
+          <div class="check-row"><span class="check-box"></span> West Side</div>
+          <div class="check-row"><span class="check-box"></span> Burns Park</div>
+          <div class="check-row"><span class="check-box"></span> South State</div>
+        </div>
+      </div>
+    </aside>
+
+    <main>
+      <div class="topbar">
+        <div>
+          <h1>Ann Arbor pollen data collection dashboard</h1>
+          <p class="lede">A public-facing view of the monitoring study, showing how much data has been collected and how pollen measurements vary across places and times in the city.</p>
+        </div>
+        <div class="stamp">Mockup only<br>Example data for layout review</div>
+      </div>
+
+      <section class="metrics" aria-label="study snapshot">
+        <div class="metric"><span>Active study sites</span><strong>8</strong></div>
+        <div class="metric"><span>Hourly records collected</span><strong>42,816</strong></div>
+        <div class="metric"><span>Daily summaries</span><strong>1,784</strong></div>
+        <div class="metric"><span>Collection period</span><strong>92 days</strong></div>
+      </section>
+
+      <div class="grid">
+        <div>
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Citywide trend</h2>
+              <div class="small">Daily total tree pollen concentration by Ann Arbor study area, example values.</div>
+            </div>
+            <div class="time-chart">
+              <svg class="spark" viewBox="0 0 720 220" preserveAspectRatio="none" role="img" aria-label="Mock daily trend lines by study area">
+                <path d="M0,184 C32,170 47,176 72,160 C104,139 124,150 149,122 C175,93 197,114 221,86 C257,46 276,65 304,58 C335,50 359,78 386,92 C423,112 440,78 471,71 C505,63 522,99 548,121 C574,143 592,129 622,145 C657,164 681,156 720,178 L720,220 L0,220 Z" fill="rgba(38, 120, 95, 0.16)"/>
+                <g opacity="0.38">
+                  <path d="M0,172 C39,159 65,165 98,138 C126,113 158,125 185,98 C218,66 246,79 276,56 C316,28 342,50 374,61 C413,75 439,52 472,48 C509,45 535,74 560,103 C596,144 630,132 665,155 C689,171 705,166 720,181" fill="none" stroke="#2d6f9f" stroke-width="2.5" stroke-linecap="round"/>
+                  <path d="M0,191 C42,183 64,174 98,162 C127,151 151,146 184,120 C213,98 243,105 274,74 C309,44 344,74 378,102 C411,129 438,102 471,91 C506,79 535,113 562,135 C596,162 625,154 661,170 C690,183 705,180 720,189" fill="none" stroke="#c58b19" stroke-width="2.5" stroke-linecap="round"/>
+                  <path d="M0,181 C35,168 65,176 95,151 C127,125 154,138 184,109 C213,82 248,96 278,69 C316,34 343,63 373,70 C413,79 436,64 468,68 C505,73 536,98 565,124 C601,156 630,140 662,157 C690,172 705,170 720,183" fill="none" stroke="#9c4a5a" stroke-width="2.5" stroke-linecap="round"/>
+                  <path d="M0,198 C39,190 66,185 96,172 C126,159 155,156 184,133 C213,111 246,119 278,92 C315,60 342,83 374,92 C414,104 438,91 470,98 C505,105 535,124 564,146 C599,171 630,165 662,179 C690,190 706,189 720,198" fill="none" stroke="#6e7f87" stroke-width="2.5" stroke-linecap="round"/>
+                  <path d="M0,188 C38,178 64,170 96,145 C126,121 154,131 184,101 C214,71 245,88 276,61 C314,34 343,55 375,76 C413,101 438,79 470,77 C505,76 535,105 564,129 C598,158 630,147 663,164 C690,178 706,176 720,187" fill="none" stroke="#5c8f77" stroke-width="2.5" stroke-linecap="round"/>
+                </g>
+                <path d="M0,184 C32,170 47,176 72,160 C104,139 124,150 149,122 C175,93 197,114 221,86 C257,46 276,65 304,58 C335,50 359,78 386,92 C423,112 440,78 471,71 C505,63 522,99 548,121 C574,143 592,129 622,145 C657,164 681,156 720,178" fill="none" stroke="#1f6f58" stroke-width="7" stroke-linecap="round"/>
+                <circle cx="304" cy="58" r="6" fill="#20313a"/>
+                <text x="318" y="50" fill="#20313a" font-size="14">spring peak</text>
+              </svg>
+              <div class="axis-labels"><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span></div>
+            </div>
+            <div class="trend-legend">
+              <span class="legend-item" style="color:#18212b; font-weight:700;"><span class="line-key" style="height:5px; background:#1f6f58"></span>Citywide average</span>
+              <span class="legend-item" style="opacity:0.58;"><span class="line-key" style="background:#2d6f9f"></span>North Campus</span>
+              <span class="legend-item" style="opacity:0.58;"><span class="line-key" style="background:#c58b19"></span>Kerrytown</span>
+              <span class="legend-item" style="opacity:0.58;"><span class="line-key" style="background:#9c4a5a"></span>West Side</span>
+              <span class="legend-item" style="opacity:0.58;"><span class="line-key" style="background:#6e7f87"></span>Burns Park</span>
+              <span class="legend-item" style="opacity:0.58;"><span class="line-key" style="background:#5c8f77"></span>South State</span>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h2>What the measurements show</h2>
+              <div class="small">Public summary replacing site-specific box whisker plots.</div>
+            </div>
+            <div class="summary-grid">
+              <div class="summary">
+                <h3>Across study sites</h3>
+                <div class="value">3.8x</div>
+                <div class="range-line"></div>
+                <div class="caption">Highest site median was 3.8 times the lowest site median for total tree pollen.</div>
+              </div>
+              <div class="summary">
+                <h3>Across days</h3>
+                <div class="value">12 to 486</div>
+                <div class="range-line"></div>
+                <div class="caption">Daily citywide concentrations covered a broad range during the example collection period.</div>
+              </div>
+              <div class="summary">
+                <h3>Peak window</h3>
+                <div class="value">6 to 10 AM</div>
+                <div class="range-line"></div>
+                <div class="caption">The highest hourly values often appeared during the morning in this mock view.</div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div>
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Interpolated pollen surface</h2>
+              <div class="small">Kriging-style public map, total tree pollen.</div>
+            </div>
+            <div class="map-wrap">
+              <svg class="map-svg" viewBox="0 0 430 470" preserveAspectRatio="none" role="img" aria-label="Mock kriging map for Ann Arbor pollen">
+                <rect width="430" height="470" fill="#e9efec"/>
+                <path d="M-26,101 C47,80 91,89 145,67 C204,42 259,47 314,34 C361,23 401,19 456,4 L456,146 C394,155 348,164 294,180 C232,198 173,195 112,213 C63,227 26,243 -26,270 Z" fill="#dbeee6"/>
+                <path d="M276,245 C331,220 383,224 454,197 L454,470 L276,470 Z" fill="#dfe9dd"/>
+                <path d="M-17,348 C43,316 101,315 159,285 C212,258 267,250 334,244 C379,240 407,231 454,211 L454,470 L-17,470 Z" fill="#e4ebdf"/>
+                <path d="M94,55 C131,72 151,100 175,134 C202,172 244,186 297,195 C347,203 374,229 406,270" fill="none" stroke="#8fb3bd" stroke-width="7" opacity="0.7"/>
+                <path d="M94,55 C131,72 151,100 175,134 C202,172 244,186 297,195 C347,203 374,229 406,270" fill="none" stroke="#b8d6df" stroke-width="4" opacity="0.95"/>
+                <g opacity="0.95">
+                  <path d="M61,0 C68,70 72,129 66,193 C58,274 75,338 111,482" fill="none" stroke="#ffffff" stroke-width="8"/>
+                  <path d="M61,0 C68,70 72,129 66,193 C58,274 75,338 111,482" fill="none" stroke="#c7d0d2" stroke-width="2"/>
+                  <path d="M143,-8 C165,72 190,118 219,181 C254,259 281,336 299,482" fill="none" stroke="#ffffff" stroke-width="7"/>
+                  <path d="M143,-8 C165,72 190,118 219,181 C254,259 281,336 299,482" fill="none" stroke="#c7d0d2" stroke-width="2"/>
+                  <path d="M-8,245 C73,229 132,219 207,223 C293,228 349,214 439,181" fill="none" stroke="#ffffff" stroke-width="7"/>
+                  <path d="M-8,245 C73,229 132,219 207,223 C293,228 349,214 439,181" fill="none" stroke="#c7d0d2" stroke-width="2"/>
+                </g>
+                <g opacity="0.55">
+                  <path d="M-8,87 C67,101 116,116 166,148 C222,184 280,200 438,203" fill="none" stroke="#ffffff" stroke-width="3"/>
+                  <path d="M23,462 C72,413 122,375 187,339 C248,305 318,287 438,284" fill="none" stroke="#ffffff" stroke-width="3"/>
+                  <path d="M22,10 C51,78 97,132 136,188 C180,251 209,325 227,464" fill="none" stroke="#ffffff" stroke-width="3"/>
+                  <path d="M235,-8 C255,55 273,103 312,157 C352,212 384,275 417,384" fill="none" stroke="#ffffff" stroke-width="3"/>
+                </g>
+                <g opacity="0.64">
+                  <path d="M-20,135 C72,105 118,128 183,91 C257,49 304,75 451,38 L451,505 L-20,505 Z" fill="#cfe8d9"/>
+                  <path d="M-8,272 C71,236 135,246 203,208 C281,165 349,180 447,130 L447,500 L-8,500 Z" fill="#ebd996"/>
+                  <path d="M37,356 C102,301 173,334 229,273 C285,213 361,245 452,206 L452,498 L37,498 Z" fill="#d78b72"/>
+                  <path d="M197,441 C224,367 270,358 305,303 C337,253 384,258 455,226 L455,498 L197,498 Z" fill="#bf6263"/>
+                </g>
+                <g opacity="0.82">
+                  <path d="M61,0 C68,70 72,129 66,193 C58,274 75,338 111,482" fill="none" stroke="#ffffff" stroke-width="5"/>
+                  <path d="M143,-8 C165,72 190,118 219,181 C254,259 281,336 299,482" fill="none" stroke="#ffffff" stroke-width="4"/>
+                  <path d="M-8,245 C73,229 132,219 207,223 C293,228 349,214 439,181" fill="none" stroke="#ffffff" stroke-width="5"/>
+                  <path d="M94,55 C131,72 151,100 175,134 C202,172 244,186 297,195 C347,203 374,229 406,270" fill="none" stroke="#8fb3bd" stroke-width="3"/>
+                </g>
+                <text x="26" y="112" fill="#60747a" font-size="14">Huron River</text>
+                <text x="306" y="330" fill="#718279" font-size="13">parkland</text>
+                <text x="32" y="395" fill="#718279" font-size="13">residential</text>
+                <text x="248" y="66" fill="#718279" font-size="13">urban area</text>
+              </svg>
+              <div class="legend">
+                <strong>Estimated concentration</strong>
+                <div class="legend-scale"></div>
+                <div style="display:flex; justify-content:space-between;"><span>Lower</span><span>Higher</span></div>
+              </div>
+            </div>
+            <div class="callout">This panel would communicate the study premise directly: pollen exposure can vary within a city, so neighborhood-scale monitoring may reveal patterns that a single regional monitor would miss.</div>
+          </section>
+        </div>
+      </div>
+
+      <section class="panel full-width-panel">
+        <div class="panel-head">
+          <h2>Measurements collected so far</h2>
+          <div class="small">Rows are pollen groups measured across participating Ann Arbor sites.</div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Pollen group</th>
+              <th>Hourly measurements</th>
+              <th>Daily summaries</th>
+              <th>Daily avg range<br>min / median / max</th>
+              <th>% days detected</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="pollen-name">Total tree pollen</td>
+              <td>7,136</td>
+              <td>368</td>
+              <td>12 / 142 / 486</td>
+              <td class="coverage-cell">
+                <div class="coverage-label"><span>Detected</span><span>92%</span></div>
+                <div class="bar-track"><div class="bar" style="width: 92%"></div></div>
+              </td>
+            </tr>
+            <tr>
+              <td class="pollen-name">Total pollen</td>
+              <td>7,136</td>
+              <td>368</td>
+              <td>18 / 168 / 544</td>
+              <td class="coverage-cell">
+                <div class="coverage-label"><span>Detected</span><span>92%</span></div>
+                <div class="bar-track"><div class="bar blue" style="width: 92%"></div></div>
+              </td>
+            </tr>
+            <tr>
+              <td class="pollen-name">Oak</td>
+              <td>6,812</td>
+              <td>351</td>
+              <td>0 / 78 / 322</td>
+              <td class="coverage-cell">
+                <div class="coverage-label"><span>Detected</span><span>88%</span></div>
+                <div class="bar-track"><div class="bar gold" style="width: 88%"></div></div>
+              </td>
+            </tr>
+            <tr>
+              <td class="pollen-name">Maple</td>
+              <td>6,640</td>
+              <td>342</td>
+              <td>0 / 44 / 210</td>
+              <td class="coverage-cell">
+                <div class="coverage-label"><span>Detected</span><span>84%</span></div>
+                <div class="bar-track"><div class="bar rose" style="width: 84%"></div></div>
+              </td>
+            </tr>
+            <tr>
+              <td class="pollen-name">Grass</td>
+              <td>5,944</td>
+              <td>306</td>
+              <td>0 / 22 / 156</td>
+              <td class="coverage-cell">
+                <div class="coverage-label"><span>Detected</span><span>76%</span></div>
+                <div class="bar-track"><div class="bar" style="width: 76%"></div></div>
+              </td>
+            </tr>
+            <tr>
+              <td class="pollen-name">Weed and shrub</td>
+              <td>4,912</td>
+              <td>253</td>
+              <td>0 / 15 / 118</td>
+              <td class="coverage-cell">
+                <div class="coverage-label"><span>Detected</span><span>62%</span></div>
+                <div class="bar-track"><div class="bar blue" style="width: 62%"></div></div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

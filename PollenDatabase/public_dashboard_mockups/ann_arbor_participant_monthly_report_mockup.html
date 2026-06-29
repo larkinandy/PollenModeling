@@ -1,0 +1,686 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ann Arbor Pollen Monitor Host Monthly Report Mockup</title>
+  <style>
+    :root {
+      --ink: #18212b;
+      --muted: #63727d;
+      --paper: #eef3f1;
+      --panel: #ffffff;
+      --line: #d8e1df;
+      --green: #246f59;
+      --green-soft: #e4f0eb;
+      --blue: #2e6f9d;
+      --blue-soft: #e7f1f7;
+      --gold: #b17816;
+      --gold-soft: #fbf0d5;
+      --rose: #9b4b5b;
+      --rose-soft: #f6e8ea;
+      --shadow: 0 18px 45px rgba(23, 38, 47, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+      letter-spacing: 0;
+    }
+
+    .page {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 30px 24px 44px;
+    }
+
+    .report {
+      background: #fbfdfc;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 290px;
+      gap: 28px;
+      padding: 30px 34px;
+      background: linear-gradient(135deg, #20313a 0%, #285845 100%);
+      color: #f7fbf9;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: #b9d7ca;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: 34px;
+      line-height: 1.1;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 760px;
+      color: #dce9e4;
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    .host-card {
+      background: rgba(255, 255, 255, 0.10);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .host-card span {
+      display: block;
+      color: #bfd8ce;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+
+    .host-card strong {
+      display: block;
+      color: #ffffff;
+      font-size: 22px;
+      margin-bottom: 12px;
+    }
+
+    .host-card .small {
+      color: #dce9e4;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    main {
+      padding: 24px;
+    }
+
+    .summary-strip {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .metric,
+    .section,
+    .mini-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .metric {
+      padding: 15px 16px;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 27px;
+      margin-top: 5px;
+    }
+
+    .metric em {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 12px;
+      font-style: normal;
+    }
+
+    .section {
+      padding: 20px;
+      margin-top: 16px;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.2;
+    }
+
+    .section-head p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+      max-width: 520px;
+      text-align: right;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .three-col {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .mini-card {
+      padding: 15px;
+      background: #fbfdfc;
+    }
+
+    .mini-card h3 {
+      margin: 0 0 8px;
+      font-size: 14px;
+    }
+
+    .mini-card .value {
+      font-size: 26px;
+      font-weight: 800;
+      margin-bottom: 5px;
+    }
+
+    .mini-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.38;
+    }
+
+    .chart {
+      height: 260px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background:
+        linear-gradient(#edf2f3 1px, transparent 1px) 0 0 / 100% 25%,
+        #fbfdfc;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .chart svg {
+      position: absolute;
+      inset: 16px 16px 30px;
+      width: calc(100% - 32px);
+      height: calc(100% - 46px);
+    }
+
+    .axis {
+      position: absolute;
+      left: 16px;
+      right: 16px;
+      bottom: 9px;
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .legend-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 9px;
+    }
+
+    .key {
+      width: 18px;
+      height: 3px;
+      border-radius: 99px;
+      display: inline-block;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .table th {
+      color: var(--muted);
+      font-size: 11px;
+      text-align: left;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--line);
+      padding: 0 12px 9px 0;
+    }
+
+    .table td {
+      border-bottom: 1px solid #edf2f1;
+      padding: 10px 12px 10px 0;
+    }
+
+    .table tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 3px 8px;
+      font-size: 12px;
+      font-weight: 750;
+    }
+
+    .badge.green {
+      background: var(--green-soft);
+      color: var(--green);
+    }
+
+    .badge.gold {
+      background: var(--gold-soft);
+      color: var(--gold);
+    }
+
+    .badge.blue {
+      background: var(--blue-soft);
+      color: var(--blue);
+    }
+
+    .bar-track {
+      height: 9px;
+      width: 100%;
+      background: #edf2f1;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 7px;
+    }
+
+    .bar {
+      height: 100%;
+      border-radius: 999px;
+      background: var(--green);
+    }
+
+    .bar.blue {
+      background: var(--blue);
+    }
+
+    .bar.gold {
+      background: var(--gold);
+    }
+
+    .region-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 0.95fr) minmax(330px, 1.05fr);
+      gap: 16px;
+    }
+
+    .mini-map {
+      height: 290px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #e7efed;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .mini-map svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .monitor-pin {
+      position: absolute;
+      left: 55%;
+      top: 52%;
+      width: 16px;
+      height: 16px;
+      border: 3px solid #fff;
+      background: var(--green);
+      border-radius: 50%;
+      box-shadow: 0 0 0 2px rgba(24, 33, 43, 0.18);
+    }
+
+    .pin-label {
+      position: absolute;
+      left: calc(55% + 15px);
+      top: calc(52% - 6px);
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 4px;
+      padding: 3px 6px;
+      font-size: 12px;
+      font-weight: 750;
+    }
+
+    .network {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .update {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .update p {
+      margin: 0 0 12px;
+      color: #38454d;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .next-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 9px;
+    }
+
+    .next-list li {
+      background: #fbfdfc;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 11px;
+      color: #38454d;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .footer {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    @media print {
+      body {
+        background: #ffffff;
+      }
+
+      .page {
+        padding: 0;
+      }
+
+      .report {
+        border: 0;
+        box-shadow: none;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .hero,
+      .two-col,
+      .region-grid,
+      .update {
+        grid-template-columns: 1fr;
+      }
+
+      .summary-strip,
+      .three-col,
+      .network {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .section-head {
+        display: block;
+      }
+
+      .section-head p {
+        text-align: left;
+        margin-top: 8px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .summary-strip,
+      .three-col,
+      .network {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 28px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <article class="report">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Monthly participant report</p>
+          <h1>Your pollen monitor in June 2026</h1>
+          <p>This mock report is written for a household, school, clinic, or community partner hosting a pollen monitor. It summarizes what their monitor contributed, what was observed across Ann Arbor, how the broader network is growing, and what the study team is working on next.</p>
+        </div>
+        <aside class="host-card" aria-label="host summary">
+          <span>Monitor host</span>
+          <strong>West Side site</strong>
+          <span>Study region</span>
+          <strong>Ann Arbor, MI</strong>
+          <div class="small">Example values for layout review. Replace with the host monitor name, local reporting period, and verified monthly metrics.</div>
+        </aside>
+      </header>
+
+      <main>
+        <section class="summary-strip" aria-label="monthly snapshot">
+          <div class="metric"><span>Your monitor hours</span><strong>646</strong><em>90% of possible hours</em></div>
+          <div class="metric"><span>Your detected days</span><strong>27</strong><em>out of 30 days</em></div>
+          <div class="metric"><span>Ann Arbor sites</span><strong>8</strong><em>active in June</em></div>
+          <div class="metric"><span>Network regions</span><strong>7</strong><em>collecting this month</em></div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>1. Your monitor this month</h2>
+            <p>Personalized summary for the participant hosting a monitor, emphasizing contribution and local observations rather than device operations.</p>
+          </div>
+          <div class="two-col">
+            <div>
+              <div class="chart">
+                <svg viewBox="0 0 720 210" preserveAspectRatio="none" role="img" aria-label="Host monitor and Ann Arbor average trend">
+                  <path d="M0,178 C55,162 86,168 132,139 C179,109 215,124 252,84 C292,43 325,67 365,72 C411,78 442,105 482,118 C533,136 565,112 610,139 C655,166 682,156 720,174 L720,210 L0,210 Z" fill="rgba(36, 111, 89, 0.13)"/>
+                  <g opacity="0.35">
+                    <path d="M0,166 C55,149 92,155 133,126 C180,92 220,102 258,64 C296,28 331,53 367,62 C412,73 444,88 485,108 C532,130 568,96 612,128 C654,156 682,151 720,168" fill="none" stroke="#2e6f9d" stroke-width="3" stroke-linecap="round"/>
+                    <path d="M0,188 C58,178 91,171 132,148 C177,122 216,137 252,100 C294,61 327,82 365,86 C412,91 442,124 482,133 C532,145 566,128 612,151 C657,173 685,169 720,184" fill="none" stroke="#b17816" stroke-width="3" stroke-linecap="round"/>
+                  </g>
+                  <path d="M0,178 C55,162 86,168 132,139 C179,109 215,124 252,84 C292,43 325,67 365,72 C411,78 442,105 482,118 C533,136 565,112 610,139 C655,166 682,156 720,174" fill="none" stroke="#246f59" stroke-width="6" stroke-linecap="round"/>
+                  <path d="M0,170 C55,154 88,161 132,132 C179,100 216,116 252,78 C292,38 326,61 365,68 C411,75 442,101 482,114 C533,132 566,107 611,135 C655,162 682,152 720,170" fill="none" stroke="#18212b" stroke-width="3" stroke-linecap="round" stroke-dasharray="7 7"/>
+                </svg>
+                <div class="axis"><span>Jun 1</span><span>Jun 10</span><span>Jun 20</span><span>Jun 30</span></div>
+              </div>
+              <div class="legend-row">
+                <span><span class="key" style="height:5px; background:#246f59"></span>Your monitor</span>
+                <span><span class="key" style="background:#18212b"></span>Ann Arbor average</span>
+                <span><span class="key" style="background:#2e6f9d"></span>Nearby sites</span>
+              </div>
+            </div>
+            <div class="three-col">
+              <div class="mini-card">
+                <h3>Hours contributed</h3>
+                <div class="value">646</div>
+                <p>Your monitor contributed most of the possible hourly measurements this month.</p>
+              </div>
+              <div class="mini-card">
+                <h3>Highest day</h3>
+                <div class="value">Jun 12</div>
+                <p>The largest daily average occurred during the mid-month tree pollen peak.</p>
+              </div>
+              <div class="mini-card">
+                <h3>Compared with region</h3>
+                <div class="value">+18%</div>
+                <p>Your site was above the Ann Arbor median for total tree pollen.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>2. Ann Arbor study region</h2>
+            <p>Regional context for the host: what their monitor helped reveal about neighborhood-scale variation.</p>
+          </div>
+          <div class="region-grid">
+            <div>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Regional measure</th>
+                    <th>June summary</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Active monitors</td>
+                    <td>8 sites</td>
+                    <td><span class="badge green">Growing coverage</span></td>
+                  </tr>
+                  <tr>
+                    <td>Total hourly records</td>
+                    <td>5,184</td>
+                    <td><span class="badge green">Strong month</span></td>
+                  </tr>
+                  <tr>
+                    <td>Daily regional range</td>
+                    <td>12 / 142 / 486</td>
+                    <td><span class="badge gold">Wide variation</span></td>
+                  </tr>
+                  <tr>
+                    <td>Most variable period</td>
+                    <td>Jun 9-15</td>
+                    <td><span class="badge blue">Spring transition</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="mini-map">
+              <svg viewBox="0 0 520 290" preserveAspectRatio="none" role="img" aria-label="Ann Arbor regional monitor map mockup">
+                <rect width="520" height="290" fill="#e6efec"/>
+                <path d="M-20,92 C88,71 148,86 228,57 C325,23 390,45 540,14 L540,315 L-20,315 Z" fill="#cde6d7"/>
+                <path d="M-20,185 C72,159 144,169 240,139 C334,109 414,120 540,81 L540,315 L-20,315 Z" fill="#efd98f" opacity="0.86"/>
+                <path d="M15,259 C89,218 173,236 247,191 C323,144 402,163 540,122 L540,315 L15,315 Z" fill="#d78970" opacity="0.72"/>
+                <path d="M72,8 C82,61 83,106 76,158 C68,217 88,251 119,300" fill="none" stroke="#ffffff" stroke-width="6" opacity="0.75"/>
+                <path d="M171,-8 C199,52 224,94 253,143 C292,205 313,245 330,304" fill="none" stroke="#ffffff" stroke-width="4" opacity="0.7"/>
+                <path d="M-10,160 C76,146 155,142 248,145 C338,148 411,135 536,105" fill="none" stroke="#ffffff" stroke-width="5" opacity="0.7"/>
+              </svg>
+              <div class="monitor-pin"></div>
+              <div class="pin-label">Your monitor</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>3. Full pollen monitoring network</h2>
+            <p>Network-level context helps participants see how their local monitor contributes to a larger study.</p>
+          </div>
+          <div class="network">
+            <div class="mini-card">
+              <h3>Study regions</h3>
+              <div class="value">7</div>
+              <p>Regions contributed data during this reporting month.</p>
+            </div>
+            <div class="mini-card">
+              <h3>Active monitors</h3>
+              <div class="value">64</div>
+              <p>Monitoring sites are collecting neighborhood-scale pollen data.</p>
+            </div>
+            <div class="mini-card">
+              <h3>Hourly records</h3>
+              <div class="value">41k</div>
+              <p>Example monthly hourly measurements across the network.</p>
+            </div>
+            <div class="mini-card">
+              <h3>Primary focus</h3>
+              <div class="value">Tree</div>
+              <p>Tree pollen remained the dominant seasonal signal in this mock month.</p>
+            </div>
+          </div>
+          <div style="margin-top: 14px;">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Network observation</th>
+                  <th>What it means</th>
+                  <th>Participant contribution</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Large within-city differences</td>
+                  <td>Nearby sites can show meaningfully different pollen levels.</td>
+                  <td>Hosted monitors make these local contrasts measurable.</td>
+                </tr>
+                <tr>
+                  <td>Timing differs by region</td>
+                  <td>Peak periods do not occur on the same dates everywhere.</td>
+                  <td>Consistent local measurements help identify these timing shifts.</td>
+                </tr>
+                <tr>
+                  <td>More repeated measurements</td>
+                  <td>Hourly data provide richer seasonal patterns than occasional samples.</td>
+                  <td>Monitor hosts help sustain repeated data collection.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>4. Brief study update</h2>
+            <p>A short narrative section keeps participants informed without overwhelming them with technical details.</p>
+          </div>
+          <div class="update">
+            <div>
+              <p>The study team is continuing to evaluate how pollen varies across neighborhoods and across the day. June data from Ann Arbor show why multiple monitors are useful: even when the citywide pattern is similar, individual sites can differ in magnitude and timing.</p>
+              <p>During the next reporting cycle, the team will continue checking data completeness, comparing seasonal patterns across sites, and preparing participant-friendly summaries of what the monitoring network is learning.</p>
+              <p>Thank you for hosting a monitor. Your participation helps build a more detailed picture of local pollen exposure than would be possible from a single regional station.</p>
+            </div>
+            <ul class="next-list">
+              <li><strong>Coming next:</strong> refine monthly summary metrics for each host site.</li>
+              <li><strong>In progress:</strong> compare daily pollen patterns across Ann Arbor neighborhoods.</li>
+              <li><strong>Reminder:</strong> please contact the study team if the monitor location changes.</li>
+            </ul>
+          </div>
+          <p class="footer">Mock report for design review only. All values, dates, monitor names, and findings are placeholders and should be replaced with verified study outputs before participant distribution.</p>
+        </section>
+      </main>
+    </article>
+  </div>
+</body>
+</html>

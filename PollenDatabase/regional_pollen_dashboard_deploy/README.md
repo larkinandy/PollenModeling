@@ -9,6 +9,7 @@ This folder is a self-contained Streamlit Community Cloud version of the regiona
 - `data/pollen_hourly.parquet`: zero-filled hourly pollen and particulate records used by the dashboard.
 - `requirements.txt`: Streamlit Cloud Python dependencies.
 - `export_dashboard_data.py`: local refresh script for rebuilding the Parquet files from the local `pollen_dashboard` Postgres database.
+- `refresh_dashboard_data.py`: local end-to-end sync from `pollen` to `pollen_dashboard`, followed by a Parquet rebuild.
 
 ## Optional Password
 
@@ -22,7 +23,13 @@ If `dashboard_password` is not set, the app runs without a password prompt.
 
 ## Refreshing Data Locally
 
-From the repository root, run:
+From the repository root, synchronize PostgreSQL and rebuild the Parquet files:
+
+```powershell
+C:\Users\larki\AppData\Local\Python\pythoncore-3.14-64\python.exe regional_pollen_dashboard_deploy\refresh_dashboard_data.py
+```
+
+To rebuild only the Parquet files from the existing `pollen_dashboard` database, run:
 
 ```powershell
 C:\Users\larki\AppData\Local\Python\pythoncore-3.14-64\python.exe regional_pollen_dashboard_deploy\export_dashboard_data.py

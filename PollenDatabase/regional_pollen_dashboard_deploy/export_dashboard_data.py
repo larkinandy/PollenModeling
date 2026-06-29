@@ -11,9 +11,19 @@ import psycopg2
 ROOT = Path(__file__).resolve().parent
 REPO_ROOT = ROOT.parent
 DATA_DIR = ROOT / "data"
-DB_NAME = "pollen_dashboard"
+DB_NAME = os.getenv("DASHBOARD_DB_NAME", "pollen_dashboard")
 SITE_NAME_KEY_FILE = REPO_ROOT / "regional_pollen_dashboard_site_name_key.csv"
 RANDOM_NAME_SEED = 20260617
+EXCLUDED_SITE_NAMES = {
+    "CH1",
+    "CH1-out",
+    "CH2",
+    "CH2-out",
+    "CH3",
+    "CH3-out",
+    "CH4",
+    "CH4-out",
+}
 
 NAME_ADJECTIVES = [
     "Amber",
@@ -239,6 +249,13 @@ def main():
         conn.close()
 
     sites, site_name_key = anonymize_site_names(sites)
+    excluded_site_ids = site_name_key.loc[
+        site_name_key["real_name"].isin(EXCLUDED_SITE_NAMES), "site_id"
+    ]
+    sites = sites.loc[~sites["site_id"].isin(excluded_site_ids)].copy()
+    pollen = pollen.loc[~pollen["site_id"].isin(excluded_site_ids)].copy()
+    site_name_key = site_name_key.loc[~site_name_key["site_id"].isin(excluded_site_ids)].copy()
+
     site_name_key.to_csv(SITE_NAME_KEY_FILE, index=False)
     sites.to_parquet(DATA_DIR / "sites.parquet", index=False, compression="zstd")
     pollen.to_parquet(DATA_DIR / "pollen_hourly.parquet", index=False, compression="zstd")
