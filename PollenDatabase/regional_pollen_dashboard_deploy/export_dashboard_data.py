@@ -245,6 +245,32 @@ def main():
             """,
             conn,
         )
+        meteorology = pd.read_sql_query(
+            """
+            SELECT
+                c.study_region_name,
+                e.site_id,
+                e.moment,
+                e.temperature_2m_k,
+                e.dewpoint_2m_k,
+                e.precipitation_m,
+                e.u10_ms,
+                e.v10_ms,
+                e.wind_speed_10m_ms,
+                e.wind_from_deg,
+                e.relative_humidity_2m_percent AS relative_humidity_percent,
+                e.downward_irradiation_w_m2
+            FROM era5_hourly_site e
+            JOIN site s
+              ON s.site_id = e.site_id
+            JOIN city c
+              ON c.city_id = s.city_id
+            WHERE c.study_region_name IS NOT NULL
+              AND c.study_region_name <> 'Seattle'
+            ORDER BY c.study_region_name, e.site_id, e.moment;
+            """,
+            conn,
+        )
     finally:
         conn.close()
 
@@ -254,13 +280,16 @@ def main():
     ]
     sites = sites.loc[~sites["site_id"].isin(excluded_site_ids)].copy()
     pollen = pollen.loc[~pollen["site_id"].isin(excluded_site_ids)].copy()
+    meteorology = meteorology.loc[~meteorology["site_id"].isin(excluded_site_ids)].copy()
     site_name_key = site_name_key.loc[~site_name_key["site_id"].isin(excluded_site_ids)].copy()
 
     site_name_key.to_csv(SITE_NAME_KEY_FILE, index=False)
     sites.to_parquet(DATA_DIR / "sites.parquet", index=False, compression="zstd")
     pollen.to_parquet(DATA_DIR / "pollen_hourly.parquet", index=False, compression="zstd")
+    meteorology.to_parquet(DATA_DIR / "era5_hourly_site.parquet", index=False, compression="zstd")
     print("Wrote %i site rows" % len(sites))
     print("Wrote %i pollen rows" % len(pollen))
+    print("Wrote %i ERA5 site-hour rows" % len(meteorology))
     print("Wrote site name key to %s" % SITE_NAME_KEY_FILE)
 
 

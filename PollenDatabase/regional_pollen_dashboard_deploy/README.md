@@ -7,6 +7,7 @@ This folder is a self-contained Streamlit Community Cloud version of the regiona
 - `streamlit_app.py`: Streamlit app entry point.
 - `data/sites.parquet`: site and current sensor-status snapshot.
 - `data/pollen_hourly.parquet`: zero-filled hourly pollen and particulate records used by the dashboard.
+- `data/era5_hourly_site.parquet`: hourly site-level ERA5 meteorology used by the Meteorology view and rain QA.
 - `requirements.txt`: Streamlit Cloud Python dependencies.
 - `export_dashboard_data.py`: local refresh script for rebuilding the Parquet files from the local `pollen_dashboard` Postgres database.
 - `refresh_dashboard_data.py`: local end-to-end sync from `pollen` to `pollen_dashboard`, followed by a Parquet rebuild.
